@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Configurateur échafaudage ALTRAD METRIX</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    :root {
+      --primary: #e30613; /* Rouge Peduzzi/Altrad */
+      --bg: #f5f5f5;
+      --card-bg: #ffffff;
+      --text-main: #222;
+      --text-muted: #666;
+      --border-radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text-main);
+    }
+
+    .app {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 12px 16px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    main {
+      flex: 1;
+      padding: 16px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      padding: 16px;
+    }
+
+    .step-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+
+    .question {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field label {
+      font-size: 14px;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    .choice-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .choice-btn {
+      flex: 1;
+      padding: 10px 8px;
+      text-align: center;
+      border-radius: 999px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      cursor: pointer;
+      background: #fff;
+      user-select: none;
+    }
+
+    .choice-btn.selected {
+      border-color: var(--primary);
+      background: rgba(227, 6, 19, 0.08);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      gap: 8px;
+    }
+
+    button {
+      border-radius: 999px;
+      border: none;
+      padding: 10px 16px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .btn-secondary {
+      background: #e0e0e0;
+      color: #333;
+      flex: 1;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      flex: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-primary[disabled] {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    .status {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    .status.error {
+      color: #c62828;
+    }
+
+    .status.success {
+      color: #2e7d32;
+    }
+
+    .results {
+      margin-top: 16px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      padding: 6px 4px;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+    }
+
+    th {
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .ref {
+      font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.04);
+      font-size: 11px;
+      margin-left: 4px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>Configurateur échafaudage</header>
+  <main>
+    <div class="card">
+      <div id="question-area"></div>
+      <div class="actions">
+        <button id="prev-btn" class="btn-secondary">Retour</button>
+        <button id="next-btn" class="btn-primary">
+          <span id="next-label">Suivant</span>
+        </button>
+      </div>
+      <div id="status" class="status"></div>
+    </div>
+
+    <div id="results" class="card results" style="display:none;">
+      <div style="font-weight:600; margin-bottom:8px;">
+        Liste de matériel
+        <span class="badge" id="recap"></span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+          <tr>
+            <th>Réf.</th>
+            <th>Désignation</th>
+            <th>Qté</th>
+          </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  // 🔗 URL de ton API Python déjà déployée sur Vercel
+  const API_URL = "https://assistant-liste-mat-riel-chafaudage.vercel.app/api/calcul";
+
+  const state = {
+    step: 0,
+    L: null,
+    H: null,
+    largeur: null,
+    F: 1,
+    protection_mur: null,
+    grutage: null,
+    stabilisation: null
+  };
+
+  const steps = [
+    "Longueur",
+    "Hauteur",
+    "Largeur",
+    "Façades",
+    "Protection mur",
+    "Grutage",
+    "Stabilisation"
+  ];
+
+  const questionArea = document.getElementById("question-area");
+  const prevBtn = document.getElementById("prev-btn");
+  const nextBtn = document.getElementById("next-btn");
+  const nextLabel = document.getElementById("next-label");
+  const statusEl = document.getElementById("status");
+  const resultsEl = document.getElementById("results");
+  const resultsBody = document.getElementById("results-body");
+  const recapEl = document.getElementById("recap");
+
+  function renderStep() {
+    statusEl.textContent = "";
+    statusEl.className = "status";
+
+    const step = state.step;
+    const stepHtmlPrefix = `
+      <div class="step-label">Étape ${step + 1} / ${steps.length}</div>
+    `;
+
+    let html = stepHtmlPrefix;
+
+    if (step === 0) {
+      html += `
+        <div class="question">Quelle est la longueur de façade en mètres ?</div>
+        <div class="field">
+          <label>Longueur (L)</label>
+          <input id="input-L" type="number" min="1" step="0.1" value="${state.L ?? ""}" placeholder="ex : 5" />
+        </div>
+      `;
+    } else if (step === 1) {
+      html += `
+        <div class="question">Quelle est la hauteur totale en mètres ?</div>
+        <div class="field">
+          <label>Hauteur (H)</label>
+          <input id="input-H" type="number" min="2" step="0.1" value="${state.H ?? ""}" placeholder="ex : 6" />
+        </div>
+      `;
+    } else if (step === 2) {
+      html += `
+        <div class="question">Souhaites-tu une largeur 0,70 m ou 1,00 m ?</div>
+        <div class="field">
+          <div class="choice-row">
+            <div class="choice-btn ${state.largeur === 0.7 ? "selected" : ""}" data-largeur="0.7">0,70 m</div>
+            <div class="choice-btn ${state.largeur === 1.0 ? "selected" : ""}" data-largeur="1.0">1,00 m</div>
+          </div>
+        </div>
+      `;
+    } else if (step === 3) {
+      html += `
+        <div class="question">Combien de façades identiques veux-tu monter ?</div>
+        <div class="field">
+          <label>Nombre de façades (F)</label>
+          <input id="input-F" type="number" min="1" step="1" value="${state.F ?? 1}" />
+        </div>
+      `;
+    } else if (step === 4) {
+      html += `
+        <div class="question">Souhaites-tu protéger le côté mur ?</div>
+        <div class="field">
+          <div class="choice-row">
+            <div class="choice-btn ${state.protection_mur === "OUI" ? "selected" : ""}" data-protec="OUI">OUI</div>
+            <div class="choice-btn ${state.protection_mur === "NON" ? "selected" : ""}" data-protec="NON">NON</div>
+          </div>
+        </div>
+      `;
+    } else if (step === 5) {
+      html += `
+        <div class="question">Souhaites-tu gruter l’échafaudage ?</div>
+        <div class="field">
+          <div class="choice-row">
+            <div class="choice-btn ${state.grutage === "OUI" ? "selected" : ""}" data-grutage="OUI">OUI</div>
+            <div class="choice-btn ${state.grutage === "NON" ? "selected" : ""}" data-grutage="NON">NON</div>
+          </div>
+        </div>
+      `;
+    } else if (step === 6) {
+      html += `
+        <div class="question">Quelle méthode de stabilisation souhaites-tu ?</div>
+        <div class="field">
+          <div class="choice-row">
+            <div class="choice-btn ${state.stabilisation === "stabilisateurs" ? "selected" : ""}" data-stab="stabilisateurs">Stabilisateurs</div>
+            <div class="choice-btn ${state.stabilisation === "amarrage" ? "selected" : ""}" data-stab="amarrage">Amarrage au mur</div>
+          </div>
+        </div>
+      `;
+    }
+
+    questionArea.innerHTML = html;
+
+    // gestion sélection boutons
+    document.querySelectorAll("[data-largeur]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const val = parseFloat(btn.getAttribute("data-largeur"));
+        state.largeur = val;
+        renderStep();
+      });
+    });
+
+    document.querySelectorAll("[data-protec]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.protection_mur = btn.getAttribute("data-protec");
+        renderStep();
+      });
+    });
+
+    document.querySelectorAll("[data-grutage]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.grutage = btn.getAttribute("data-grutage");
+        renderStep();
+      });
+    });
+
+    document.querySelectorAll("[data-stab]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.stabilisation = btn.getAttribute("data-stab");
+        renderStep();
+      });
+    });
+
+    // bouton précédent
+    prevBtn.disabled = state.step === 0;
+
+    // libellé du bouton principal
+    if (state.step === steps.length - 1) {
+      nextLabel.textContent = "Lancer le calcul";
+    } else {
+      nextLabel.textContent = "Suivant";
+    }
+  }
+
+  function readCurrentStepInputs() {
+    const step = state.step;
+
+    if (step === 0) {
+      const val = parseFloat(document.getElementById("input-L").value);
+      if (isNaN(val) || val <= 0) {
+        showError("Merci de saisir une longueur valide.");
+        return false;
+      }
+      state.L = val;
+    } else if (step === 1) {
+      const val = parseFloat(document.getElementById("input-H").value);
+      if (isNaN(val) || val <= 0) {
+        showError("Merci de saisir une hauteur valide.");
+        return false;
+      }
+      state.H = val;
+    } else if (step === 2) {
+      if (state.largeur !== 0.7 && state.largeur !== 1.0) {
+        showError("Merci de choisir une largeur.");
+        return false;
+      }
+    } else if (step === 3) {
+      const val = parseInt(document.getElementById("input-F").value, 10);
+      if (isNaN(val) || val < 1) {
+        showError("Merci de saisir un nombre de façades valide.");
+        return false;
+      }
+      state.F = val;
+    } else if (step === 4) {
+      if (!state.protection_mur) {
+        showError("Merci d’indiquer OUI ou NON.");
+        return false;
+      }
+    } else if (step === 5) {
+      if (!state.grutage) {
+        showError("Merci d’indiquer OUI ou NON.");
+        return false;
+      }
+    } else if (step === 6) {
+      if (!state.stabilisation) {
+        showError("Merci de choisir un mode de stabilisation.");
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  function showError(message) {
+    statusEl.textContent = message;
+    statusEl.className = "status error";
+  }
+
+  function showInfo(message) {
+    statusEl.textContent = message;
+    statusEl.className = "status";
+  }
+
+  function showSuccess(message) {
+    statusEl.textContent = message;
+    statusEl.className = "status success";
+  }
+
+  async function callApi() {
+    showInfo("Calcul en cours…");
+    nextBtn.disabled = true;
+
+    try {
+      const payload = {
+        L: state.L,
+        H: state.H,
+        largeur: state.largeur,
+        F: state.F,
+        protection_mur: state.protection_mur,
+        grutage: state.grutage,
+        stabilisation: state.stabilisation
+      };
+
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        throw new Error("Erreur serveur " + res.status);
+      }
+
+      const data = await res.json();
+      renderResults(data.items || []);
+      showSuccess("Calepinage terminé ✅");
+
+    } catch (err) {
+      console.error(err);
+      showError("Erreur lors de l’appel : " + err.message);
+    } finally {
+      nextBtn.disabled = false;
+    }
+  }
+
+  function renderResults(items) {
+    resultsBody.innerHTML = "";
+    if (!items || items.length === 0) {
+      resultsBody.innerHTML = "<tr><td colspan='3'>Aucun article calculé.</td></tr>";
+    } else {
+      for (const item of items) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="ref">${item.reference}</td>
+          <td>${item.designation || ""}</td>
+          <td>${item.quantite}</td>
+        `;
+        resultsBody.appendChild(tr);
+      }
+    }
+
+    recapEl.textContent = `${state.L} m x ${state.H} m, largeur ${state.largeur} m`;
+    resultsEl.style.display = "block";
+  }
+
+  prevBtn.addEventListener("click", () => {
+    if (state.step > 0) {
+      state.step -= 1;
+      renderStep();
+    }
+  });
+
+  nextBtn.addEventListener("click", () => {
+    if (!readCurrentStepInputs()) return;
+
+    if (state.step < steps.length - 1) {
+      state.step += 1;
+      renderStep();
+    } else {
+      // Dernière étape → appel API
+      callApi();
+    }
+  });
+
+  // initialisation
+  renderStep();
+</script>
+</body>
+</html>
