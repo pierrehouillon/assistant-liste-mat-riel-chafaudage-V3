@@ -114,6 +114,7 @@
       padding: 6px 8px;
       border-bottom: 1px solid #eee;
       text-align: left;
+      vertical-align: middle;
     }
 
     th {
@@ -125,6 +126,14 @@
     .ref {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       font-size: 12px;
+    }
+
+    .thumb {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto;
     }
 
     tfoot td {
@@ -157,7 +166,7 @@
         border: none;
         border-bottom: 1px solid #eee;
         position: relative;
-        padding: 4px 6px 4px 90px; /* place pour le label */
+        padding: 4px 6px 4px 100px; /* un peu plus large pour les labels */
         font-size: 12px;
       }
 
@@ -170,7 +179,7 @@
         position: absolute;
         left: 6px;
         top: 4px;
-        width: 80px;
+        width: 90px;
         font-weight: 600;
         font-size: 11px;
         color: var(--text-muted);
@@ -178,6 +187,10 @@
 
       .ref {
         font-size: 12px;
+      }
+
+      .thumb {
+        margin-left: 0;
       }
 
       tfoot {
@@ -259,6 +272,7 @@
       <table>
         <thead>
           <tr>
+            <th>Photo</th>
             <th>Référence</th>
             <th>Désignation</th>
             <th>Qté</th>
@@ -269,15 +283,15 @@
         <tbody id="tbody"></tbody>
         <tfoot>
           <tr>
-            <td colspan="4">Poids total échafaudage</td>
+            <td colspan="5">Poids total échafaudage</td>
             <td id="poids-global"></td>
           </tr>
           <tr>
-            <td colspan="4">+ Estimation racks / paniers</td>
+            <td colspan="5">+ Estimation racks / paniers</td>
             <td id="poids-racks"></td>
           </tr>
           <tr>
-            <td colspan="4">= Poids total global</td>
+            <td colspan="5">= Poids total global</td>
             <td id="poids-global-avec-racks"></td>
           </tr>
         </tfoot>
@@ -358,7 +372,6 @@ btn.addEventListener("click", () => {
 
 // -------- Reset du formulaire --------
 btnReset.addEventListener("click", () => {
-  // Réinitialisation des champs
   document.getElementById("L").value = "";
   document.getElementById("H").value = "";
   document.getElementById("largeur").value = "1.00";
@@ -366,16 +379,13 @@ btnReset.addEventListener("click", () => {
   document.getElementById("grutage").value = "NON";
   document.getElementById("stabilisation").value = "stabilisateurs";
 
-  // Masquer les résultats
   blocResultat.style.display = "none";
 
-  // Effacer les messages
   statusEl.textContent = "";
   statusEl.className = "status";
   transportNoteEl.textContent = "";
   recapEl.textContent = "";
 
-  // Effacer le tableau
   tbody.innerHTML = "";
   poidsGlobalEl.textContent = "";
   poidsRacksEl.textContent = "";
@@ -501,11 +511,15 @@ function afficherResultats(data, params) {
   tbody.innerHTML = "";
 
   if (items.length === 0) {
-    tbody.innerHTML = "<tr><td colspan='5'>Aucun article calculé.</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='6'>Aucun article calculé.</td></tr>";
   } else {
     for (const item of items) {
+      const imgSrc = `images/${item.reference}.jpg`;
       const tr = document.createElement("tr");
       tr.innerHTML = `
+        <td data-label="Photo">
+          <img class="thumb" src="${imgSrc}" alt="${item.reference}" onerror="this.style.display='none';">
+        </td>
         <td class="ref" data-label="Référence">${item.reference}</td>
         <td data-label="Désignation">${item.designation || ""}</td>
         <td data-label="Qté">${item.quantite}</td>
@@ -528,12 +542,12 @@ function afficherResultats(data, params) {
   let poidsRacks = 0;
 
   if (nbRefs > 0 && nbRefs < 10) {
-    poidsRacks = 43;                 // petit : 1 châssis
+    poidsRacks = 43;
   } else if (nbRefs < 25) {
-    poidsRacks = 173;                // moyen : châssis + panier
+    poidsRacks = 173;
   } else if (nbRefs >= 25) {
     const blocs = Math.ceil(nbRefs / 25);
-    poidsRacks = 173 * blocs;        // gros : par blocs de 25 réf.
+    poidsRacks = 173 * blocs;
   }
 
   poidsRacksEl.textContent = poidsRacks > 0 ? poidsRacks.toFixed(1) + " kg" : "-";
