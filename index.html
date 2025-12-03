@@ -90,7 +90,13 @@
       color: #b71c1c;
     }
 
-    /* ---------------- TABLEAU (mode desktop / normal) ---------------- */
+    .muted {
+      color: var(--text-muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    /* -------- TABLEAU (mode normal / desktop) -------- */
 
     table {
       width: 100%;
@@ -121,13 +127,7 @@
       border-top: 2px solid #ccc;
     }
 
-    .muted {
-      color: var(--text-muted);
-      font-size: 12px;
-      margin-top: 4px;
-    }
-
-    /* ---------------- TABLEAU RESPONSIVE (petits écrans / mobile) ---------------- */
+    /* -------- TABLEAU RESPONSIVE (petits écrans) -------- */
 
     @media (max-width: 480px) {
 
@@ -137,7 +137,7 @@
       }
 
       thead {
-        display: none; /* on cache l'en-tête, les labels sont dans les cellules */
+        display: none;
       }
 
       tr {
@@ -152,7 +152,7 @@
         border: none;
         border-bottom: 1px solid #eee;
         position: relative;
-        padding: 4px 6px 4px 90px; /* place pour le label à gauche */
+        padding: 4px 6px 4px 90px; /* place pour le label */
         font-size: 12px;
       }
 
@@ -248,8 +248,9 @@
       Tu peux aller sur le back office ou ta tablette pour renseigner les références et les quantités.
     </div>
     <div id="recap" class="muted"></div>
+
     <div>
-      <table id="tableau">
+      <table>
         <thead>
           <tr>
             <th>Référence</th>
@@ -276,16 +277,17 @@
         </tfoot>
       </table>
     </div>
+
     <div id="transport-note" class="muted" style="margin-top:8px;"></div>
   </div>
 </div>
 
 <script>
-// --- Données références (désignation + poids) ---
+// -------- Références officielles ALTRAD (désignation + poids) --------
 const REFERENCES = {
   "ALTASV5": { designation: "Socle à vérin 0,61 m", poids: 3.2 },
   "ALTAR12": { designation: "Roue orientable 250 kg avec vérin", poids: 9.5 },
-  "ALTKEMB12": { designation: "Embase de départ", poids: 2.1 },
+  "ALTKEMB": { designation: "Embase de départ", poids: 2.1 },
   "ALTKPT2": { designation: "Poteau standard hauteur 1,00 m", poids: 5.4 },
   "ALTKPT4": { designation: "Poteau standard hauteur 2,00 m", poids: 9.9 },
   "ALTKLC1": { designation: "Lisse 0,70 m", poids: 3.1 },
@@ -296,19 +298,19 @@ const REFERENCES = {
   "ALTKPE5": { designation: "Plancher trappe 2,50 × 0,60 m", poids: 25.4 },
   "ALTKDV5": { designation: "Diagonale verticale 2,50 × 2,00 m", poids: 13.0 },
   "ALTKGH5": { designation: "Garde-corps permanent de sécurité 2,50 m", poids: 13.2 },
-  "ALTKGH1": { designation: "Garde-corps permanent 1,00 m (avec plinthe intégrée)", poids: 8.5 },
-  "ALTKGH2": { designation: "Garde-corps permanent de fermeture 1,00 m", poids: 4.5 },
-  "ALTKPI5": { designation: "Plinthe bois 2,50 m", poids: 5.0 },
+  "ALTKGH2": { designation: "Garde-corps permanent de sécurité 1,00 m (avec plinthe intégrée)", poids: 8.5 },
+  "ALTKGH1": { designation: "Garde-corps permanent de sécurité 0,70 m (avec plinthe intégrée)", poids: 7.2 },
+  "ALTKPI5": { designation: "Plinthe bois 2,50 m", poids: 4.9 },
   "ALT000675": { designation: "Stabilisateur télescopique 3,30–6,00 m", poids: 21.3 },
-  "ALTAMX1": { designation: "Cale bois", poids: 1.6 },
-  "ALTACPI": { designation: "Cale plastique", poids: 0.2 },
-  "ALTAA11": { designation: "Tube d'amarrage 1,00 m crochet", poids: 3.9 },
-  "ALTAPA2": { designation: "Ancrage diamètre 12 longueur 120 mm", poids: 0.2 },
-  "ALTL99P": { designation: "Ancrage soudure", poids: 0.1 },
-  "ALTRLEV": { designation: "Anneau de levage", poids: 0.1 },
-  "ALTKB12": { designation: "Boulon jonction 12 × 60 mm", poids: 0.06 },
-  "ALTKB13": { designation: "Boulon jonction 12 × 70 mm", poids: 0.07 },
-  "ALTKFSV": { designation: "Fixe socle à vérin", poids: 0.1 }
+  "ALTAMX1": { designation: "Cale bois", poids: 3.7 },
+  "ALTACPI": { designation: "Cale plastique", poids: 0.3 },
+  "ALTAA11": { designation: "Tube d'amarrage 1,10 m crochet coudé", poids: 3.9 },
+  "ALTAPA2": { designation: "Piton d'ammarage diamètre 12 longueur 120mm", poids: 0.2 },
+  "ALTL99P": { designation: "Raccord angle droit pour tube 48,3mm (collier assemblage)", poids: 1.1 },
+  "ALTRLEV": { designation: "Collier de levage", poids: 1.1 },
+  "ALTKB12": { designation: "Boulon de jonction 12 × 60 mm", poids: 0.1 },
+  "ALTKB13": { designation: "Boulon de jonction 12 × 70 mm", poids: 0.1 },
+  "ALTKFSV": { designation: "Fixe socle à vérin", poids: 3.1 }
 };
 
 const btn = document.getElementById("btn-calcul");
@@ -347,7 +349,7 @@ btn.addEventListener("click", () => {
   statusEl.className = "status";
 });
 
-// --- Calcul côté front, même logique que dans le Python ---
+// -------- Calcul local (mêmes règles que ton assistant) --------
 function calculLocal(L, H, largeur, F, protection_mur_str, grutage_str, stabilisation) {
   const protection_mur = protection_mur_str.toUpperCase() === "OUI";
   const grutage = grutage_str.toUpperCase() === "OUI";
@@ -357,7 +359,7 @@ function calculLocal(L, H, largeur, F, protection_mur_str, grutage_str, stabilis
 
   // 1) SOCLES / POTEAUX
   const ALTASV5 = 2 * T + 2;
-  const ALTKEMB12 = ALTASV5;
+  const ALTKEMB = ALTASV5;
   const ALTKPT2 = ALTASV5;
   const ALTKPT4 = ALTASV5 * N;
 
@@ -380,17 +382,22 @@ function calculLocal(L, H, largeur, F, protection_mur_str, grutage_str, stabilis
 
   // 5) GARDE-CORPS
   const ALTKGH5 = protection_mur ? (2 * T * N) : (T * N);
-  const ALTKGH1 = Math.abs(largeur - 0.70) < 1e-6 ? 2 * N : 0;
-  const ALTKGH2 = Math.abs(largeur - 1.00) < 1e-6 ? 2 * N : 0;
+  const ALTKGH1 =
+    Math.abs(largeur - 0.70) < 1e-6 ? 2 * N : 0;
+  const ALTKGH2 =
+    Math.abs(largeur - 1.00) < 1e-6 ? 2 * N : 0;
 
   // 6) PLINTHES
   const ALTKPI5 = 2 * T * N;
 
   // 7) STABILISATEURS
-  const ALT000675 = (stabilisation === "stabilisateurs" && H <= 6) ? (T + 1) : 0;
+  const ALT000675 =
+    (stabilisation === "stabilisateurs" && H <= 6) ? (T + 1) : 0;
 
   // 8) AMARRAGE
-  const POINTS = (stabilisation === "amarrage") ? Math.ceil((L * H) / 12) : 0;
+  const POINTS = (stabilisation === "amarrage")
+    ? Math.ceil((L * H) / 12)
+    : 0;
   const ALTAA11 = POINTS;
   const ALTAPA2 = POINTS;
   const ALTL99P = POINTS;
@@ -398,12 +405,12 @@ function calculLocal(L, H, largeur, F, protection_mur_str, grutage_str, stabilis
   // 9) GRUTAGE
   const ALTRLEV = grutage ? 4 : 0;
   const ALTKB12 = grutage ? ALTKPT4 : 0;
-  const ALTKB13 = grutage ? ALTKEMB12 : 0;
+  const ALTKB13 = grutage ? ALTKEMB : 0;
   const ALTKFSV = grutage ? ALTASV5 : 0;
 
   const quantites = {
     ALTASV5,
-    ALTKEMB12,
+    ALTKEMB,
     ALTKPT2,
     ALTKPT4,
     ALTKLC1,
@@ -452,11 +459,10 @@ function calculLocal(L, H, largeur, F, protection_mur_str, grutage_str, stabilis
   }
 
   poids_total_global = +poids_total_global.toFixed(1);
-
   return { items, poids_total_global };
 }
 
-// --- Affichage des résultats + racks + transport ---
+// -------- Affichage (tableau + poids + transport) --------
 function afficherResultats(data, params) {
   const items = data.items || [];
   const poidsGlobal = data.poids_total_global ?? null;
@@ -486,17 +492,17 @@ function afficherResultats(data, params) {
     poidsGlobalEl.textContent = "-";
   }
 
-  // Estimation racks / paniers (en nombre de références distinctes)
+  // Estimation racks / paniers selon nb de références
   const nbRefs = items.length;
   let poidsRacks = 0;
 
   if (nbRefs > 0 && nbRefs < 10) {
-    poidsRacks = 43;                 // 1 châssis démontable seul
+    poidsRacks = 43;                 // petit : 1 châssis
   } else if (nbRefs < 25) {
-    poidsRacks = 173;                // 1 châssis (43) + 1 panier (130)
+    poidsRacks = 173;                // moyen : châssis + panier
   } else if (nbRefs >= 25) {
     const blocs = Math.ceil(nbRefs / 25);
-    poidsRacks = 173 * blocs;        // estimation simple par blocs de 25 réf.
+    poidsRacks = 173 * blocs;        // gros : par blocs de 25 réf.
   }
 
   poidsRacksEl.textContent = poidsRacks > 0 ? poidsRacks.toFixed(1) + " kg" : "-";
@@ -509,7 +515,7 @@ function afficherResultats(data, params) {
     poidsGlobalAvecRacksEl.textContent = "-";
   }
 
-  // Note transport navette / camion (seuil 350 kg)
+  // Logistique navette / camion (seuil 350 kg)
   if (poidsGlobalAvecRacks != null) {
     if (poidsGlobalAvecRacks <= 350) {
       transportNoteEl.textContent =
