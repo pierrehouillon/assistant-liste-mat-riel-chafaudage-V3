@@ -80,6 +80,11 @@
       cursor: default;
     }
 
+    .btn-reset {
+      background: #666;
+      margin-top: 8px;
+    }
+
     .status {
       margin-top: 8px;
       font-size: 13px;
@@ -237,6 +242,7 @@
     </select>
 
     <button id="btn-calcul">Lancer le calcul</button>
+    <button id="btn-reset" class="btn-reset">Réinitialiser</button>
     <div id="status" class="status"></div>
   </div>
 
@@ -314,6 +320,7 @@ const REFERENCES = {
 };
 
 const btn = document.getElementById("btn-calcul");
+const btnReset = document.getElementById("btn-reset");
 const statusEl = document.getElementById("status");
 const blocResultat = document.getElementById("bloc-resultat");
 const tbody = document.getElementById("tbody");
@@ -349,7 +356,33 @@ btn.addEventListener("click", () => {
   statusEl.className = "status";
 });
 
-// -------- Calcul local (mêmes règles que ton assistant) --------
+// -------- Reset du formulaire --------
+btnReset.addEventListener("click", () => {
+  // Réinitialisation des champs
+  document.getElementById("L").value = "";
+  document.getElementById("H").value = "";
+  document.getElementById("largeur").value = "1.00";
+  document.getElementById("protection").value = "NON";
+  document.getElementById("grutage").value = "NON";
+  document.getElementById("stabilisation").value = "stabilisateurs";
+
+  // Masquer les résultats
+  blocResultat.style.display = "none";
+
+  // Effacer les messages
+  statusEl.textContent = "";
+  statusEl.className = "status";
+  transportNoteEl.textContent = "";
+  recapEl.textContent = "";
+
+  // Effacer le tableau
+  tbody.innerHTML = "";
+  poidsGlobalEl.textContent = "";
+  poidsRacksEl.textContent = "";
+  poidsGlobalAvecRacksEl.textContent = "";
+});
+
+// -------- Calcul local --------
 function calculLocal(L, H, largeur, F, protection_mur_str, grutage_str, stabilisation) {
   const protection_mur = protection_mur_str.toUpperCase() === "OUI";
   const grutage = grutage_str.toUpperCase() === "OUI";
@@ -382,10 +415,8 @@ function calculLocal(L, H, largeur, F, protection_mur_str, grutage_str, stabilis
 
   // 5) GARDE-CORPS
   const ALTKGH5 = protection_mur ? (2 * T * N) : (T * N);
-  const ALTKGH1 =
-    Math.abs(largeur - 0.70) < 1e-6 ? 2 * N : 0;
-  const ALTKGH2 =
-    Math.abs(largeur - 1.00) < 1e-6 ? 2 * N : 0;
+  const ALTKGH1 = Math.abs(largeur - 0.70) < 1e-6 ? 2 * N : 0;
+  const ALTKGH2 = Math.abs(largeur - 1.00) < 1e-6 ? 2 * N : 0;
 
   // 6) PLINTHES
   const ALTKPI5 = 2 * T * N;
@@ -492,7 +523,7 @@ function afficherResultats(data, params) {
     poidsGlobalEl.textContent = "-";
   }
 
-  // Estimation racks / paniers selon nb de références
+  // Estimation racks / paniers (en nombre de références distinctes)
   const nbRefs = items.length;
   let poidsRacks = 0;
 
