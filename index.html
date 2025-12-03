@@ -136,8 +136,8 @@
 
     <label>Largeur de l’échafaudage</label>
     <select id="largeur">
+      <option value="1.00" selected>1,00 m</option>
       <option value="0.70">0,70 m</option>
-      <option value="1.00">1,00 m</option>
     </select>
 
     <label>Protection côté mur ?</label>
@@ -145,6 +145,9 @@
       <option value="OUI">OUI</option>
       <option value="NON">NON</option>
     </select>
+    <div class="muted">
+      ⚠ Obligatoire si l’espace entre l’échafaudage et le mur est supérieur à 20 cm.
+    </div>
 
     <label>Grutage prévu ?</label>
     <select id="grutage">
@@ -163,7 +166,12 @@
   </div>
 
   <div class="card" id="bloc-resultat" style="display:none;">
-    <div style="font-weight:600; margin-bottom:4px;">Liste de matériel ALTRAD METRIX</div>
+    <div style="font-weight:600; margin-bottom:4px;">
+      Voici ta liste de matériel prête à être commandée.
+    </div>
+    <div class="muted" style="margin-bottom:4px;">
+      Tu peux aller sur le back office ou ta tablette pour renseigner les références et les quantités.
+    </div>
     <div id="recap" class="muted"></div>
     <div style="overflow-x:auto;">
       <table id="tableau">
