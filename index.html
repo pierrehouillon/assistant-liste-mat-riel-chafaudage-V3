@@ -14,7 +14,10 @@
       --text-muted: #666;
     }
 
-    * { box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
 
     body {
       margin: 0;
@@ -87,6 +90,8 @@
       color: #b71c1c;
     }
 
+    /* ---------------- TABLEAU (mode desktop / normal) ---------------- */
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -106,20 +111,90 @@
       font-size: 12px;
     }
 
-    tfoot td {
-      font-weight: 600;
-      border-top: 2px solid #ccc;
-    }
-
     .ref {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       font-size: 12px;
+    }
+
+    tfoot td {
+      font-weight: 600;
+      border-top: 2px solid #ccc;
     }
 
     .muted {
       color: var(--text-muted);
       font-size: 12px;
       margin-top: 4px;
+    }
+
+    /* ---------------- TABLEAU RESPONSIVE (petits écrans / mobile) ---------------- */
+
+    @media (max-width: 480px) {
+
+      table, thead, tbody, th, td, tr {
+        display: block;
+        width: 100%;
+      }
+
+      thead {
+        display: none; /* on cache l'en-tête, les labels sont dans les cellules */
+      }
+
+      tr {
+        margin-bottom: 8px;
+        border-radius: 8px;
+        border: 1px solid #eee;
+        padding: 4px 6px;
+        background: #fafafa;
+      }
+
+      td {
+        border: none;
+        border-bottom: 1px solid #eee;
+        position: relative;
+        padding: 4px 6px 4px 90px; /* place pour le label à gauche */
+        font-size: 12px;
+      }
+
+      td:last-child {
+        border-bottom: none;
+      }
+
+      td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 6px;
+        top: 4px;
+        width: 80px;
+        font-weight: 600;
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+
+      .ref {
+        font-size: 12px;
+      }
+
+      tfoot {
+        display: block;
+        margin-top: 12px;
+      }
+
+      tfoot tr {
+        border: none;
+        background: transparent;
+        padding: 0;
+      }
+
+      tfoot td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: none;
+        border-top: 1px solid #ddd;
+        padding: 4px 0;
+        font-size: 12px;
+      }
     }
   </style>
 </head>
@@ -173,7 +248,7 @@
       Tu peux aller sur le back office ou ta tablette pour renseigner les références et les quantités.
     </div>
     <div id="recap" class="muted"></div>
-    <div style="overflow-x:auto;">
+    <div>
       <table id="tableau">
         <thead>
           <tr>
@@ -394,11 +469,11 @@ function afficherResultats(data, params) {
     for (const item of items) {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td class="ref">${item.reference}</td>
-        <td>${item.designation || ""}</td>
-        <td>${item.quantite}</td>
-        <td>${item.poids_unitaire != null ? item.poids_unitaire.toFixed(1) : "-"}</td>
-        <td>${item.poids_total != null ? item.poids_total.toFixed(1) : "-"}</td>
+        <td class="ref" data-label="Référence">${item.reference}</td>
+        <td data-label="Désignation">${item.designation || ""}</td>
+        <td data-label="Qté">${item.quantite}</td>
+        <td data-label="Poids unitaire (kg)">${item.poids_unitaire != null ? item.poids_unitaire.toFixed(1) : "-"}</td>
+        <td data-label="Poids total (kg)">${item.poids_total != null ? item.poids_total.toFixed(1) : "-"}</td>
       `;
       tbody.appendChild(tr);
     }
