@@ -1,106 +1,28 @@
 {
-  "ALTASV5": {
-    "designation": "Socle à vérin 0,61 m",
-    "poids": 3.2
-  },
-  "ALTAR12": {
-    "designation": "Roue orientable 250 kg avec vérin",
-    "poids": 9.5
-  },
-  "ALTKEMB12": {
-    "designation": "Embase de départ",
-    "poids": 2.1
-  },
-  "ALTKPT2": {
-    "designation": "Poteau standard hauteur 1,00 m",
-    "poids": 5.4
-  },
-  "ALTKPT4": {
-    "designation": "Poteau standard hauteur 2,00 m",
-    "poids": 9.9
-  },
-  "ALTKLC1": {
-    "designation": "Lisse 0,70 m",
-    "poids": 3.1
-  },
-  "ALTKLC2": {
-    "designation": "Lisse 1,00 m",
-    "poids": 3.5
-  },
-  "ALTKLC5": {
-    "designation": "Lisse 2,50 m",
-    "poids": 8.5
-  },
-  "ALTKMC5": {
-    "designation": "Plancher acier 2,50 × 0,30 m",
-    "poids": 7.9
-  },
-  "ALTKMC2": {
-    "designation": "Plancher acier 1,00 × 0,30 m",
-    "poids": 7.5
-  },
-  "ALTKPE5": {
-    "designation": "Plancher trappe 2,50 × 0,60 m",
-    "poids": 25.4
-  },
-  "ALTKDV5": {
-    "designation": "Diagonale verticale 2,50 × 2,00 m",
-    "poids": 13.0
-  },
-  "ALTKGH5": {
-    "designation": "Garde-corps permanent de sécurité 2,50 m",
-    "poids": 13.2
-  },
-  "ALTKGH1": {
-    "designation": "Garde-corps permanent 1,00 m (avec plinthe intégrée)",
-    "poids": 8.5
-  },
-  "ALTKGH2": {
-    "designation": "Garde-corps permanent de fermeture 1,00 m",
-    "poids": 4.5
-  },
-  "ALTKPI5": {
-    "designation": "Plinthe bois 2,50 m",
-    "poids": 5.0
-  },
-  "ALT000675": {
-    "designation": "Stabilisateur télescopique 3,30–6,00 m",
-    "poids": 21.3
-  },
-  "ALTAMX1": {
-    "designation": "Cale bois",
-    "poids": 1.6
-  },
-  "ALTACPI": {
-    "designation": "Cale plastique",
-    "poids": 0.2
-  },
-  "ALTAA11": {
-    "designation": "Tube d'amarrage 1,00 m crochet",
-    "poids": 3.9
-  },
-  "ALTAPA2": {
-    "designation": "Ancrage diamètre 12 longueur 120 mm",
-    "poids": 0.2
-  },
-  "ALTL99P": {
-    "designation": "Ancrage soudure",
-    "poids": 0.1
-  },
-  "ALTRLEV": {
-    "designation": "Anneau de levage",
-    "poids": 0.1
-  },
-  "ALTKB12": {
-    "designation": "Boulon jonction 12 × 60 mm",
-    "poids": 0.06
-  },
-  "ALTKB13": {
-    "designation": "Boulon jonction 12 × 70 mm",
-    "poids": 0.07
-  },
-  "ALTKFSV": {
-    "designation": "Fixe socle à vérin",
-    "poids": 0.1
-  }
+  "ALTASV5": { "designation": "Socle à vérin 0,61 m", "poids": 3.2 },
+  "ALTAR12": { "designation": "Roue orientable 250 kg avec vérin", "poids": 9.5 },
+  "ALTKEMB": { "designation": "Embase de départ", "poids": 2.1 },
+  "ALTKPT2": { "designation": "Poteau standard hauteur 1,00 m", "poids": 5.4 },
+  "ALTKPT4": { "designation": "Poteau standard hauteur 2,00 m", "poids": 9.9 },
+  "ALTKLC1": { "designation": "Lisse 0,70 m", "poids": 3.1 },
+  "ALTKLC2": { "designation": "Lisse 1,00 m", "poids": 3.5 },
+  "ALTKLC5": { "designation": "Lisse 2,50 m", "poids": 8.5 },
+  "ALTKMC5": { "designation": "Plancher acier 2,50 × 0,30 m", "poids": 7.9 },
+  "ALTKMC2": { "designation": "Plancher acier 1,00 × 0,30 m", "poids": 7.5 },
+  "ALTKPE5": { "designation": "Plancher trappe 2,50 × 0,60 m", "poids": 25.4 },
+  "ALTKDV5": { "designation": "Diagonale verticale 2,50 × 2,00 m", "poids": 13.0 },
+  "ALTKGH5": { "designation": "Garde-corps permanent de sécurité 2,50 m", "poids": 13.2 },
+  "ALTKGH2": { "designation": "Garde-corps permanent de sécurité 1,00 m (avec plinthe intégrée)", "poids": 8.5 },
+  "ALTKGH1": { "designation": "Garde-corps permanent de sécurité 0,70 m (avec plinthe intégrée)", "poids": 7.2 },
+  "ALTKPI5": { "designation": "Plinthe bois 2,50 m", "poids": 4.9 },
+  "ALT000675": { "designation": "Stabilisateur télescopique 3,30–6,00 m", "poids": 21.3 },
+  "ALTAMX1": { "designation": "Cale bois", "poids": 3.7 },
+  "ALTACPI": { "designation": "Cale plastique", "poids": 0.3 },
+  "ALTAA11": { "designation": "Tube d'amarrage 1,10 m crochet coudé", "poids": 3.9 },
+  "ALTAPA2": { "designation": "Piton d'ammarage diamètre 12 longueur 120mm", "poids": 0.2 },
+  "ALTL99P": { "designation": "Raccord angle droit pour tube 48,3mm (collier assemblage)", "poids": 1.1 },
+  "ALTRLEV": { "designation": "Collier de levage", "poids": 1.1 },
+  "ALTKB12": { "designation": "Boulon de jonction 12 × 60 mm", "poids": 0.1 },
+  "ALTKB13": { "designation": "Boulon de jonction 12 × 70 mm", "poids": 0.1 },
+  "ALTKFSV": { "designation": "Fixe socle à vérin", "poids": 3.1 }
 }
