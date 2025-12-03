@@ -140,9 +140,6 @@
       <option value="1.00">1,00 m</option>
     </select>
 
-    <label>Nombre de façades identiques (F)</label>
-    <input id="F" type="number" min="1" step="1" value="1">
-
     <label>Protection côté mur ?</label>
     <select id="protection">
       <option value="OUI">OUI</option>
@@ -185,12 +182,18 @@
             <td colspan="4">Poids total échafaudage</td>
             <td id="poids-global"></td>
           </tr>
+          <tr>
+            <td colspan="4">+ Estimation racks / paniers</td>
+            <td id="poids-racks"></td>
+          </tr>
+          <tr>
+            <td colspan="4">= Poids total global</td>
+            <td id="poids-global-avec-racks"></td>
+          </tr>
         </tfoot>
       </table>
     </div>
-    <div class="muted">
-      Le poids total ne tient pas compte des racks/paniers de transport.
-    </div>
+    <div id="transport-note" class="muted" style="margin-top:8px;"></div>
   </div>
 </div>
 
@@ -231,18 +234,20 @@ const blocResultat = document.getElementById("bloc-resultat");
 const tbody = document.getElementById("tbody");
 const recapEl = document.getElementById("recap");
 const poidsGlobalEl = document.getElementById("poids-global");
+const poidsRacksEl = document.getElementById("poids-racks");
+const poidsGlobalAvecRacksEl = document.getElementById("poids-global-avec-racks");
+const transportNoteEl = document.getElementById("transport-note");
 
 btn.addEventListener("click", () => {
   const L = parseFloat(document.getElementById("L").value);
   const H = parseFloat(document.getElementById("H").value);
   const largeur = parseFloat(document.getElementById("largeur").value);
-  const F = parseInt(document.getElementById("F").value, 10);
   const protection_mur = document.getElementById("protection").value;
   const grutage = document.getElementById("grutage").value;
   const stabilisation = document.getElementById("stabilisation").value;
 
-  if (!L || !H || !F) {
-    statusEl.textContent = "Merci de remplir au moins la longueur, la hauteur et le nombre de façades.";
+  if (!L || !H) {
+    statusEl.textContent = "Merci de remplir au moins la longueur et la hauteur.";
     statusEl.className = "status error";
     return;
   }
@@ -251,6 +256,7 @@ btn.addEventListener("click", () => {
   statusEl.className = "status";
   blocResultat.style.display = "none";
 
+  const F = 1; // on considère toujours 1 façade
   const data = calculLocal(L, H, largeur, F, protection_mur, grutage, stabilisation);
   afficherResultats(data, { L, H, largeur, F, protection_mur, grutage, stabilisation });
 
@@ -367,7 +373,7 @@ function calculLocal(L, H, largeur, F, protection_mur_str, grutage_str, stabilis
   return { items, poids_total_global };
 }
 
-// --- Affichage des résultats ---
+// --- Affichage des résultats + racks + transport ---
 function afficherResultats(data, params) {
   const items = data.items || [];
   const poidsGlobal = data.poids_total_global ?? null;
@@ -390,15 +396,55 @@ function afficherResultats(data, params) {
     }
   }
 
+  // Poids échafaudage seul
   if (poidsGlobal != null) {
     poidsGlobalEl.textContent = poidsGlobal.toFixed(1) + " kg";
   } else {
     poidsGlobalEl.textContent = "-";
   }
 
+  // Estimation racks / paniers (en nombre de références distinctes)
+  const nbRefs = items.length;
+  let poidsRacks = 0;
+
+  if (nbRefs > 0 && nbRefs < 10) {
+    poidsRacks = 43;                 // 1 châssis démontable seul
+  } else if (nbRefs < 25) {
+    poidsRacks = 173;                // 1 châssis (43) + 1 panier (130)
+  } else if (nbRefs >= 25) {
+    const blocs = Math.ceil(nbRefs / 25);
+    poidsRacks = 173 * blocs;        // estimation simple par blocs de 25 réf.
+  }
+
+  poidsRacksEl.textContent = poidsRacks > 0 ? poidsRacks.toFixed(1) + " kg" : "-";
+
+  let poidsGlobalAvecRacks = null;
+  if (poidsGlobal != null) {
+    poidsGlobalAvecRacks = +(poidsGlobal + poidsRacks).toFixed(1);
+    poidsGlobalAvecRacksEl.textContent = poidsGlobalAvecRacks.toFixed(1) + " kg";
+  } else {
+    poidsGlobalAvecRacksEl.textContent = "-";
+  }
+
+  // Note transport navette / camion (seuil 350 kg)
+  if (poidsGlobalAvecRacks != null) {
+    if (poidsGlobalAvecRacks <= 350) {
+      transportNoteEl.textContent =
+        "Le poids total (avec estimation des racks/paniers) reste inférieur ou égal à 350 kg : " +
+        "la navette reste possible, sous réserve des capacités de ton fourgon.";
+    } else {
+      transportNoteEl.textContent =
+        "⚠️ Poids total estimé supérieur à 350 kg (avec racks/paniers). " +
+        "Si tu prévoyais d'utiliser la navette, ce ne sera pas possible : " +
+        "il faudra prévoir une livraison camion, à anticiper au minimum 3 jours ouvrés avant la date souhaitée.";
+    }
+  } else {
+    transportNoteEl.textContent = "";
+  }
+
   recapEl.textContent =
     `Configuration : ${params.L} m × ${params.H} m, largeur ${params.largeur} m, ` +
-    `${params.F} façade(s), protection mur ${params.protection_mur}, grutage ${params.grutage}, ` +
+    `protection mur ${params.protection_mur}, grutage ${params.grutage}, ` +
     `stabilisation ${params.stabilisation}.`;
 
   blocResultat.style.display = "block";
