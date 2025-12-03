@@ -195,7 +195,35 @@
 </div>
 
 <script>
-const API_URL = "/api/calcul";
+// --- Données références (désignation + poids) ---
+const REFERENCES = {
+  "ALTASV5": { designation: "Socle à vérin 0,61 m", poids: 3.2 },
+  "ALTAR12": { designation: "Roue orientable 250 kg avec vérin", poids: 9.5 },
+  "ALTKEMB12": { designation: "Embase de départ", poids: 2.1 },
+  "ALTKPT2": { designation: "Poteau standard hauteur 1,00 m", poids: 5.4 },
+  "ALTKPT4": { designation: "Poteau standard hauteur 2,00 m", poids: 9.9 },
+  "ALTKLC1": { designation: "Lisse 0,70 m", poids: 3.1 },
+  "ALTKLC2": { designation: "Lisse 1,00 m", poids: 3.5 },
+  "ALTKLC5": { designation: "Lisse 2,50 m", poids: 8.5 },
+  "ALTKMC5": { designation: "Plancher acier 2,50 × 0,30 m", poids: 7.9 },
+  "ALTKMC2": { designation: "Plancher acier 1,00 × 0,30 m", poids: 7.5 },
+  "ALTKPE5": { designation: "Plancher trappe 2,50 × 0,60 m", poids: 25.4 },
+  "ALTKDV5": { designation: "Diagonale verticale 2,50 × 2,00 m", poids: 13.0 },
+  "ALTKGH5": { designation: "Garde-corps permanent de sécurité 2,50 m", poids: 13.2 },
+  "ALTKGH1": { designation: "Garde-corps permanent 1,00 m (avec plinthe intégrée)", poids: 8.5 },
+  "ALTKGH2": { designation: "Garde-corps permanent de fermeture 1,00 m", poids: 4.5 },
+  "ALTKPI5": { designation: "Plinthe bois 2,50 m", poids: 5.0 },
+  "ALT000675": { designation: "Stabilisateur télescopique 3,30–6,00 m", poids: 21.3 },
+  "ALTAMX1": { designation: "Cale bois", poids: 1.6 },
+  "ALTACPI": { designation: "Cale plastique", poids: 0.2 },
+  "ALTAA11": { designation: "Tube d'amarrage 1,00 m crochet", poids: 3.9 },
+  "ALTAPA2": { designation: "Ancrage diamètre 12 longueur 120 mm", poids: 0.2 },
+  "ALTL99P": { designation: "Ancrage soudure", poids: 0.1 },
+  "ALTRLEV": { designation: "Anneau de levage", poids: 0.1 },
+  "ALTKB12": { designation: "Boulon jonction 12 × 60 mm", poids: 0.06 },
+  "ALTKB13": { designation: "Boulon jonction 12 × 70 mm", poids: 0.07 },
+  "ALTKFSV": { designation: "Fixe socle à vérin", poids: 0.1 }
+};
 
 const btn = document.getElementById("btn-calcul");
 const statusEl = document.getElementById("status");
@@ -204,7 +232,7 @@ const tbody = document.getElementById("tbody");
 const recapEl = document.getElementById("recap");
 const poidsGlobalEl = document.getElementById("poids-global");
 
-btn.addEventListener("click", async () => {
+btn.addEventListener("click", () => {
   const L = parseFloat(document.getElementById("L").value);
   const H = parseFloat(document.getElementById("H").value);
   const largeur = parseFloat(document.getElementById("largeur").value);
@@ -221,39 +249,125 @@ btn.addEventListener("click", async () => {
 
   statusEl.textContent = "Calcul en cours…";
   statusEl.className = "status";
-  btn.disabled = true;
   blocResultat.style.display = "none";
 
-  try {
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        L, H, largeur, F,
-        protection_mur,
-        grutage,
-        stabilisation
-      })
-    });
+  const data = calculLocal(L, H, largeur, F, protection_mur, grutage, stabilisation);
+  afficherResultats(data, { L, H, largeur, F, protection_mur, grutage, stabilisation });
 
-    if (!res.ok) {
-      throw new Error("Erreur HTTP " + res.status);
-    }
-
-    const data = await res.json();
-    afficherResultats(data, { L, H, largeur, F, protection_mur, grutage, stabilisation });
-    statusEl.textContent = "Calepinage terminé ✅";
-    statusEl.className = "status";
-
-  } catch (e) {
-    console.error(e);
-    statusEl.textContent = "Erreur lors de l’appel : " + e.message;
-    statusEl.className = "status error";
-  } finally {
-    btn.disabled = false;
-  }
+  statusEl.textContent = "Calepinage terminé ✅";
+  statusEl.className = "status";
 });
 
+// --- Calcul côté front, même logique que dans le Python ---
+function calculLocal(L, H, largeur, F, protection_mur_str, grutage_str, stabilisation) {
+  const protection_mur = protection_mur_str.toUpperCase() === "OUI";
+  const grutage = grutage_str.toUpperCase() === "OUI";
+
+  const T = Math.ceil(L / 2.5);  // travées
+  const N = Math.ceil(H / 2.0);  // niveaux
+
+  // 1) SOCLES / POTEAUX
+  const ALTASV5 = 2 * T + 2;
+  const ALTKEMB12 = ALTASV5;
+  const ALTKPT2 = ALTASV5;
+  const ALTKPT4 = ALTASV5 * N;
+
+  // 2) LISSES
+  const ALTKLC1 = Math.abs(largeur - 0.70) < 1e-6 ? 2 * T * N : 0;
+  const ALTKLC2 = Math.abs(largeur - 1.00) < 1e-6 ? 2 * T * N : 0;
+  const ALTKLC5 = protection_mur ? (2 * T + 2 * N) : (2 * T + N);
+
+  // 3) PLANCHERS
+  const base_planchers = 2 * T * N;
+  const corr_largeur = Math.abs(largeur - 1.00) < 1e-6 ? N : 0;
+  const corr_mur = protection_mur ? 2 : 0;
+  const ALTKMC5 = base_planchers + corr_largeur - corr_mur;
+
+  const nb_trappes = Math.max(1, Math.ceil(L / 20));
+  const ALTKPE5 = F * N * nb_trappes;
+
+  // 4) DIAGONALES
+  const ALTKDV5 = protection_mur ? (2 * F) : (1 * F);
+
+  // 5) GARDE-CORPS
+  const ALTKGH5 = protection_mur ? (2 * T * N) : (T * N);
+  const ALTKGH1 = Math.abs(largeur - 0.70) < 1e-6 ? 2 * N : 0;
+  const ALTKGH2 = Math.abs(largeur - 1.00) < 1e-6 ? 2 * N : 0;
+
+  // 6) PLINTHES
+  const ALTKPI5 = 2 * T * N;
+
+  // 7) STABILISATEURS
+  const ALT000675 = (stabilisation === "stabilisateurs" && H <= 6) ? (T + 1) : 0;
+
+  // 8) AMARRAGE
+  const POINTS = (stabilisation === "amarrage") ? Math.ceil((L * H) / 12) : 0;
+  const ALTAA11 = POINTS;
+  const ALTAPA2 = POINTS;
+  const ALTL99P = POINTS;
+
+  // 9) GRUTAGE
+  const ALTRLEV = grutage ? 4 : 0;
+  const ALTKB12 = grutage ? ALTKPT4 : 0;
+  const ALTKB13 = grutage ? ALTKEMB12 : 0;
+  const ALTKFSV = grutage ? ALTASV5 : 0;
+
+  const quantites = {
+    ALTASV5,
+    ALTKEMB12,
+    ALTKPT2,
+    ALTKPT4,
+    ALTKLC1,
+    ALTKLC2,
+    ALTKLC5,
+    ALTKMC5,
+    ALTKPE5,
+    ALTKDV5,
+    ALTKGH5,
+    ALTKGH1,
+    ALTKGH2,
+    ALTKPI5,
+    ALT000675,
+    ALTAA11,
+    ALTAPA2,
+    ALTL99P,
+    ALTRLEV,
+    ALTKB12,
+    ALTKB13,
+    ALTKFSV
+  };
+
+  const items = [];
+  let poids_total_global = 0;
+
+  for (const [ref, quantite] of Object.entries(quantites)) {
+    if (quantite <= 0) continue;
+
+    const meta = REFERENCES[ref] || {};
+    const designation = meta.designation || "";
+    const poids_unitaire = meta.poids ?? null;
+    let poids_total = null;
+
+    if (poids_unitaire != null) {
+      poids_total = +(poids_unitaire * quantite).toFixed(1);
+      poids_total_global += poids_total;
+    }
+
+    items.push({
+      reference: ref,
+      designation,
+      quantite,
+      poids_unitaire,
+      poids_total
+    });
+  }
+
+  poids_total_global = +poids_total_global.toFixed(1);
+
+  return { items, poids_total_global };
+}
+
+// --- Affichage des résultats ---
 function afficherResultats(data, params) {
   const items = data.items || [];
   const poidsGlobal = data.poids_total_global ?? null;
