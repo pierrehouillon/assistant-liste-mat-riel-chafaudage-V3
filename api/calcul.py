@@ -7,102 +7,115 @@ import os
 
 app = FastAPI()
 
-# Autoriser frontend Vercel + Glide
+# CORS : autoriser l'appli web (Glide / Vercel) à appeler l'API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # tu pourras restreindre à ton domaine Glide si tu veux
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Charger les données (désignation + poids)
+# Chargement des références (désignation + poids unitaire)
 DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "references.json")
 with open(DATA_PATH, "r", encoding="utf-8") as f:
     REF_DATA = json.load(f)
 
 
 class EchafaudageRequest(BaseModel):
-    L: float
-    H: float
-    largeur: float
-    F: int
-    protection_mur: str
-    grutage: str
-    stabilisation: str
+    L: float              # longueur façade (m)
+    H: float              # hauteur totale (m)
+    largeur: float        # 0.7 ou 1.0
+    protection_mur: str   # "OUI" / "NON"
+    grutage: str          # "OUI" / "NON"
+    stabilisation: str    # "stabilisateurs" / "amarrage" / "aucune"
 
 
-@app.post("/")
-def calcul(req: EchafaudageRequest):
+@app.post("/api/calcul")
+def calcul_echafaudage(req: EchafaudageRequest):
+    """
+    Calcule les quantités d'éléments ALTRAD METRIX, ainsi que :
+    - le poids total échafaudage
+    - le poids estimé des racks / paniers
+    - le poids total global
+    """
+
     L = req.L
     H = req.H
-    F = req.F
     largeur = req.largeur
-    protection_mur = req.protection_mur.upper() == "OUI"
-    grutage = req.grutage.upper() == "OUI"
-    stabilisation = req.stabilisation.lower()
+    protection_mur = req.protection_mur.strip().upper() == "OUI"
+    grutage = req.grutage.strip().upper() == "OUI"
+    stabilisation = req.stabilisation.strip().lower()
 
-    # Travées & niveaux
-    T = math.ceil(L / 2.5)
-    N = math.ceil(H / 2.0)
+    # 1) Travées & niveaux
+    T = math.ceil(L / 2.5)   # travées
+    N = math.ceil(H / 2.0)   # niveaux
+    F = 1                    # on considère 1 façade
 
-    # 1) SOCLES / POTEAUX
+    # 2) SOCLES / EMBASES / POTEAUX
     ALTASV5 = 2 * T + 2
-    ALTKEMB12 = ALTASV5
+    ALTKEMB = ALTASV5
     ALTKPT2 = ALTASV5
     ALTKPT4 = ALTASV5 * N
 
-    # 2) LISSES
+    # 3) LISSES
     ALTKLC1 = 2 * T * N if abs(largeur - 0.70) < 1e-6 else 0
     ALTKLC2 = 2 * T * N if abs(largeur - 1.00) < 1e-6 else 0
-    ALTKLC5 = (2 * T + 2 * N) if protection_mur else (2 * T + N)
+    if protection_mur:
+        ALTKLC5 = 2 * T + 2 * N
+    else:
+        ALTKLC5 = 2 * T + N
 
-    # 3) PLANCHERS
+    # 4) PLANCHERS
     base_planchers = 2 * T * N
     corr_largeur = N if abs(largeur - 1.00) < 1e-6 else 0
     corr_mur = 2 if protection_mur else 0
     ALTKMC5 = base_planchers + corr_largeur - corr_mur
 
-    # Planchers trappe
-    nb_trappes = max(1, math.ceil(L / 20))  # au moins 1 par façade
-    ALTKPE5 = F * N * nb_trappes
+    nb_trappes_par_facade = math.ceil(L / 20.0)
+    ALTKPE5 = F * N * nb_trappes_par_facade
 
-    # 4) DIAGONALES
-    ALTKDV5 = (2 * F) if protection_mur else (1 * F)
+    # 5) DIAGONALES
+    ALTKDV5 = 2 * F if protection_mur else 1 * F
 
-    # 5) GARDE-CORPS
-    ALTKGH5 = (2 * T * N) if protection_mur else (T * N)
+    # 6) GARDE-CORPS
+    ALTKGH5 = 2 * T * N if protection_mur else T * N
     ALTKGH1 = 2 * N if abs(largeur - 0.70) < 1e-6 else 0
     ALTKGH2 = 2 * N if abs(largeur - 1.00) < 1e-6 else 0
 
-    # 6) PLINTHES
+    # 7) PLINTHES
     ALTKPI5 = 2 * T * N
 
-    # 7) STABILISATEURS
-    ALT000675 = (T + 1) if (stabilisation == "stabilisateurs" and H <= 6) else 0
+    # 8) STABILISATEURS & CALAGES
+    ALT000675 = (T + 1) if (stabilisation == "stabilisateurs" and H <= 6.0) else 0
+    ALTAMX1 = ALTASV5 + ALT000675
+    ALTACPI = ALTASV5 + ALT000675  # si tu veux remettre le choix, tu pourras filtrer côté front
 
-    # 8) AMARRAGE
-    POINTS = math.ceil((L * H) / 12) if stabilisation == "amarrage" else 0
-    ALTAA11 = POINTS
-    ALTAPA2 = POINTS
-    ALTL99P = POINTS
+    # 9) AMARRAGE
+    if stabilisation == "amarrage":
+        POINTS_AMARRAGE = math.ceil((L * H) / 12.0)
+    else:
+        POINTS_AMARRAGE = 0
+    ALTAA11 = POINTS_AMARRAGE
+    ALTAPA2 = POINTS_AMARRAGE
+    ALTL99P = POINTS_AMARRAGE
 
-    # 9) GRUTAGE
+    # 10) GRUTAGE
     ALTRLEV = 4 if grutage else 0
     ALTKB12 = ALTKPT4 if grutage else 0
-    ALTKB13 = ALTKEMB12 if grutage else 0
+    ALTKB13 = ALTKEMB if grutage else 0
     ALTKFSV = ALTASV5 if grutage else 0
 
-    # Dictionnaire des quantités
+    # 11) Quantités
     quantites = {
         "ALTASV5": ALTASV5,
-        "ALTKEMB12": ALTKEMB12,
+        "ALTKEMB": ALTKEMB,
         "ALTKPT2": ALTKPT2,
         "ALTKPT4": ALTKPT4,
         "ALTKLC1": ALTKLC1,
         "ALTKLC2": ALTKLC2,
         "ALTKLC5": ALTKLC5,
-        "ALTKMC5": ALTKMC5,
+        "ALTKMC5": max(ALTKMC5, 0),
         "ALTKPE5": ALTKPE5,
         "ALTKDV5": ALTKDV5,
         "ALTKGH5": ALTKGH5,
@@ -110,48 +123,78 @@ def calcul(req: EchafaudageRequest):
         "ALTKGH2": ALTKGH2,
         "ALTKPI5": ALTKPI5,
         "ALT000675": ALT000675,
+        "ALTAMX1": ALTAMX1,
+        "ALTACPI": ALTACPI,
         "ALTAA11": ALTAA11,
         "ALTAPA2": ALTAPA2,
         "ALTL99P": ALTL99P,
         "ALTRLEV": ALTRLEV,
         "ALTKB12": ALTKB12,
         "ALTKB13": ALTKB13,
-        "ALTKFSV": ALTKFSV
+        "ALTKFSV": ALTKFSV,
     }
 
-    rows = []
-    poids_total_global = 0.0
+    # 12) Lignes + poids échafaudage
+    items = []
+    poids_echafaudage = 0.0
 
     for ref, qte in quantites.items():
         if qte <= 0:
             continue
+        data = REF_DATA.get(ref, {})
+        designation = data.get("designation", "")
+        poids_unitaire = float(data.get("poids", 0) or 0)
+        poids_total = poids_unitaire * qte
+        poids_echafaudage += poids_total
 
-        meta = REF_DATA.get(ref, {})
-        if isinstance(meta, dict):
-            designation = meta.get("designation", "")
-            poids_unitaire = meta.get("poids", None)
-        else:
-            # Compatibilité si jamais certains items sont encore déclarés en string simple
-            designation = str(meta)
-            poids_unitaire = None
+        items.append(
+            {
+                "reference": ref,
+                "designation": designation,
+                "quantite": qte,
+                "poids_unitaire": poids_unitaire,
+                "poids_total": poids_total,
+            }
+        )
 
-        if poids_unitaire is not None:
-            poids_total = round(poids_unitaire * qte, 1)
-            poids_total_global += poids_total
-        else:
-            poids_total = None
+    # 13) Poids racks / paniers (nouvelle logique)
+    nb_lignes = len(items)
 
-        rows.append({
-            "reference": ref,
-            "designation": designation,
-            "quantite": qte,
-            "poids_unitaire": poids_unitaire,
-            "poids_total": poids_total
-        })
+    if nb_lignes == 0:
+        poids_racks = 0.0
+    elif nb_lignes < 10:
+        # très petite commande : 1 châssis démontable seul (≈ 43 kg)
+        poids_racks = 43.0
+    elif nb_lignes < 25:
+        # petite commande : 1 châssis + 1 panier grillagé (43 + 130)
+        poids_racks = 173.0
+    else:
+        # commandes plus grosses :
+        #  - base : 1 châssis + 1 panier pour les 25 premières lignes
+        #  - +130 kg (1 panier) par tranche supplémentaire de 25 lignes
+        extra_sets = math.ceil((nb_lignes - 25) / 25.0)
+        poids_racks = 173.0 + extra_sets * 130.0
 
-    poids_total_global = round(poids_total_global, 1)
+    poids_total_global = poids_echafaudage + poids_racks
+
+    SEUIL_NAVETTE = 350.0
+    navette_autorisee = poids_total_global <= SEUIL_NAVETTE
 
     return {
-        "items": rows,
-        "poids_total_global": poids_total_global
+        "items": items,
+        "poids_echafaudage": poids_echafaudage,
+        "poids_racks": poids_racks,
+        "poids_total_global": poids_total_global,
+        "seuil_navette": SEUIL_NAVETTE,
+        "navette_autorisee": navette_autorisee,
+        "meta": {
+            "L": L,
+            "H": H,
+            "largeur": largeur,
+            "T": T,
+            "N": N,
+            "protection_mur": protection_mur,
+            "grutage": grutage,
+            "stabilisation": stabilisation,
+        },
     }
