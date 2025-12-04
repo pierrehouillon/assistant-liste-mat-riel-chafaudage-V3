@@ -29,6 +29,7 @@ class EchafaudageRequest(BaseModel):
     protection_mur: str   # "OUI" / "NON"
     grutage: str          # "OUI" / "NON"
     stabilisation: str    # "stabilisateurs" / "amarrage"
+    calage_type: str      # "bois" / "plastique" / "les_deux"
 
 
 @app.post("/api/calcul")
@@ -46,6 +47,7 @@ def calcul_echafaudage(req: EchafaudageRequest):
     protection_mur = req.protection_mur.strip().upper() == "OUI"
     grutage = req.grutage.strip().upper() == "OUI"
     stabilisation = req.stabilisation.strip().lower()  # "stabilisateurs" ou "amarrage"
+    calage_type = req.calage_type.strip().lower()      # "bois" / "plastique" / "les_deux"
 
     # 1) Travées & niveaux
     T = math.ceil(L / 2.5)   # travées
@@ -86,12 +88,20 @@ def calcul_echafaudage(req: EchafaudageRequest):
     # 7) PLINTHES
     ALTKPI5 = 2 * T * N
 
-    # 8) STABILISATEURS & CALAGES
+    # 8) STABILISATEURS
     ALT000675 = (T + 1) if (stabilisation == "stabilisateurs" and H <= 6.0) else 0
-    ALTAMX1 = ALTASV5 + ALT000675
-    ALTACPI = ALTASV5 + ALT000675  # si tu veux reposer la question un jour, ce sera côté front
 
-    # 9) AMARRAGE
+    # 9) CALAGE (en fonction du choix utilisateur)
+    # nombre de points de calage = 1 par socle + 1 par stabilisateur télescopique
+    points_calage = ALTASV5 + ALT000675
+
+    use_bois = calage_type in ("bois", "les_deux", "les deux")
+    use_plastique = calage_type in ("plastique", "les_deux", "les deux")
+
+    ALTAMX1 = points_calage if use_bois else 0
+    ALTACPI = points_calage if use_plastique else 0
+
+    # 10) AMARRAGE
     if stabilisation == "amarrage":
         POINTS_AMARRAGE = math.ceil((L * H) / 12.0)
     else:
@@ -100,13 +110,13 @@ def calcul_echafaudage(req: EchafaudageRequest):
     ALTAPA2 = POINTS_AMARRAGE
     ALTL99P = POINTS_AMARRAGE
 
-    # 10) GRUTAGE
+    # 11) GRUTAGE
     ALTRLEV = 4 if grutage else 0
     ALTKB12 = ALTKPT4 if grutage else 0
     ALTKB13 = ALTKEMB if grutage else 0
     ALTKFSV = ALTASV5 if grutage else 0
 
-    # 11) Quantités
+    # 12) Quantités
     quantites = {
         "ALTASV5": ALTASV5,
         "ALTKEMB": ALTKEMB,
@@ -134,10 +144,10 @@ def calcul_echafaudage(req: EchafaudageRequest):
         "ALTKFSV": ALTKFSV,
     }
 
-    # 12) Lignes + poids échafaudage
+    # 13) Lignes + poids échafaudage + quantité totale de pièces
     items = []
     poids_echafaudage = 0.0
-    quantite_totale = 0  # << pour les racks : somme de toutes les pièces
+    quantite_totale = 0
 
     for ref, qte in quantites.items():
         if qte <= 0:
@@ -159,20 +169,18 @@ def calcul_echafaudage(req: EchafaudageRequest):
             }
         )
 
-    # 13) Poids racks / paniers basé sur la QUANTITÉ TOTALE DE PIÈCES
+    # 14) Poids racks / paniers basé sur la QUANTITÉ TOTALE DE PIÈCES
+    #   - < 10 pièces : 1 châssis seul (~43 kg)
+    #   - 10 à 40 pièces : 1 châssis + 1 panier (~173 kg)
+    #   - > 40 pièces : 1 châssis + 1 panier + 1 panier supplémentaire par tranche de 40 pièces au-delà de 40
     if quantite_totale == 0:
         poids_racks = 0.0
     elif quantite_totale < 10:
-        # très petite commande : 1 châssis démontable seul (≈ 43 kg)
         poids_racks = 43.0
-    elif quantite_totale < 25:
-        # petite commande : 1 châssis + 1 panier grillagé (43 + 130)
+    elif quantite_totale <= 40:
         poids_racks = 173.0
     else:
-        # commandes plus grosses :
-        #  - base : 1 châssis + 1 panier pour les 25 premières pièces
-        #  - +130 kg (1 panier) par tranche supplémentaire de 25 pièces
-        extra_sets = math.ceil((quantite_totale - 25) / 25.0)
+        extra_sets = math.ceil((quantite_totale - 40) / 40.0)
         poids_racks = 173.0 + extra_sets * 130.0
 
     poids_total_global = poids_echafaudage + poids_racks
@@ -196,6 +204,7 @@ def calcul_echafaudage(req: EchafaudageRequest):
             "protection_mur": protection_mur,
             "grutage": grutage,
             "stabilisation": stabilisation,
+            "calage_type": calage_type,
             "quantite_totale": quantite_totale,
         },
     }
