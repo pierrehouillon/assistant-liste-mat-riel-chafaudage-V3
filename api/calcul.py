@@ -10,7 +10,7 @@ app = FastAPI()
 # CORS : autoriser l'appli web (Glide / Vercel) à appeler l'API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # tu pourras restreindre à ton domaine Glide si tu veux
+    allow_origins=["*"],  # tu pourras restreindre à ton domaine Glide si besoin
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -24,11 +24,11 @@ with open(DATA_PATH, "r", encoding="utf-8") as f:
 
 class EchafaudageRequest(BaseModel):
     L: float              # longueur façade (m)
-    H: float              # hauteur totale (m)
+    H: float              # hauteur du dernier niveau (m)
     largeur: float        # 0.7 ou 1.0
     protection_mur: str   # "OUI" / "NON"
     grutage: str          # "OUI" / "NON"
-    stabilisation: str    # "stabilisateurs" / "amarrage" / "aucune"
+    stabilisation: str    # "stabilisateurs" / "amarrage"
 
 
 @app.post("/api/calcul")
@@ -45,7 +45,7 @@ def calcul_echafaudage(req: EchafaudageRequest):
     largeur = req.largeur
     protection_mur = req.protection_mur.strip().upper() == "OUI"
     grutage = req.grutage.strip().upper() == "OUI"
-    stabilisation = req.stabilisation.strip().lower()
+    stabilisation = req.stabilisation.strip().lower()  # "stabilisateurs" ou "amarrage"
 
     # 1) Travées & niveaux
     T = math.ceil(L / 2.5)   # travées
@@ -89,7 +89,7 @@ def calcul_echafaudage(req: EchafaudageRequest):
     # 8) STABILISATEURS & CALAGES
     ALT000675 = (T + 1) if (stabilisation == "stabilisateurs" and H <= 6.0) else 0
     ALTAMX1 = ALTASV5 + ALT000675
-    ALTACPI = ALTASV5 + ALT000675  # si tu veux remettre le choix, tu pourras filtrer côté front
+    ALTACPI = ALTASV5 + ALT000675  # si tu veux reposer la question un jour, ce sera côté front
 
     # 9) AMARRAGE
     if stabilisation == "amarrage":
@@ -137,6 +137,7 @@ def calcul_echafaudage(req: EchafaudageRequest):
     # 12) Lignes + poids échafaudage
     items = []
     poids_echafaudage = 0.0
+    quantite_totale = 0  # << pour les racks : somme de toutes les pièces
 
     for ref, qte in quantites.items():
         if qte <= 0:
@@ -146,6 +147,7 @@ def calcul_echafaudage(req: EchafaudageRequest):
         poids_unitaire = float(data.get("poids", 0) or 0)
         poids_total = poids_unitaire * qte
         poids_echafaudage += poids_total
+        quantite_totale += qte
 
         items.append(
             {
@@ -157,22 +159,20 @@ def calcul_echafaudage(req: EchafaudageRequest):
             }
         )
 
-    # 13) Poids racks / paniers (nouvelle logique)
-    nb_lignes = len(items)
-
-    if nb_lignes == 0:
+    # 13) Poids racks / paniers basé sur la QUANTITÉ TOTALE DE PIÈCES
+    if quantite_totale == 0:
         poids_racks = 0.0
-    elif nb_lignes < 10:
+    elif quantite_totale < 10:
         # très petite commande : 1 châssis démontable seul (≈ 43 kg)
         poids_racks = 43.0
-    elif nb_lignes < 25:
+    elif quantite_totale < 25:
         # petite commande : 1 châssis + 1 panier grillagé (43 + 130)
         poids_racks = 173.0
     else:
         # commandes plus grosses :
-        #  - base : 1 châssis + 1 panier pour les 25 premières lignes
-        #  - +130 kg (1 panier) par tranche supplémentaire de 25 lignes
-        extra_sets = math.ceil((nb_lignes - 25) / 25.0)
+        #  - base : 1 châssis + 1 panier pour les 25 premières pièces
+        #  - +130 kg (1 panier) par tranche supplémentaire de 25 pièces
+        extra_sets = math.ceil((quantite_totale - 25) / 25.0)
         poids_racks = 173.0 + extra_sets * 130.0
 
     poids_total_global = poids_echafaudage + poids_racks
@@ -196,5 +196,6 @@ def calcul_echafaudage(req: EchafaudageRequest):
             "protection_mur": protection_mur,
             "grutage": grutage,
             "stabilisation": stabilisation,
+            "quantite_totale": quantite_totale,
         },
     }
