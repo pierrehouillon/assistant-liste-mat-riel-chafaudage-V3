@@ -32,7 +32,7 @@
     h1 {
       font-size: 1.4rem;
       text-align: center;
-      color: var(--red);
+      color: --red;
       margin: 0 0 12px;
     }
 
@@ -92,18 +92,18 @@
       font-size: 0.95rem;
       font-weight: 600;
       color: #fff;
-      background: var(--red);
+      background: #c62828;
       cursor: pointer;
       margin-top: 4px;
     }
 
-    .btn:hover { background: var(--red-light); }
+    .btn:hover { background: #ef5350; }
 
     .btn-secondary {
       margin-top: 8px;
       background: #ffffff;
-      color: var(--red);
-      border: 1px solid var(--red);
+      color: #c62828;
+      border: 1px solid #c62828;
     }
 
     .btn-secondary:hover { background: #ffeceb; }
@@ -282,9 +282,6 @@
             <option value="plastique">Cales plastiques</option>
             <option value="les_deux">Les deux</option>
           </select>
-          <div class="hint">
-            1 cale par socle à vérin + 1 par stabilisateur télescopique, selon ton choix.
-          </div>
         </div>
 
         <button type="submit" class="btn">Lancer le calcul</button>
