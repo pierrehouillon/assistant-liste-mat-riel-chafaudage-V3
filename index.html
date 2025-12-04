@@ -1,588 +1,439 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Configurateur échafaudage ALTRAD METRIX</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
-      --primary: #c80000;
-      --bg: #f5f5f5;
-      --card: #ffffff;
-      --border-radius: 12px;
-      --text-main: #222;
-      --text-muted: #666;
+      --red: #c62828;
+      --red-light: #ef5350;
+      --grey-bg: #f9f9f9;
+      --grey-border: #e0e0e0;
+      --text-main: #212121;
+      --text-muted: #616161;
     }
 
-    * {
-      box-sizing: border-box;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      background: var(--bg);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #ffffff;
       color: var(--text-main);
     }
 
     .app {
-      max-width: 520px;
+      max-width: 480px;
       margin: 0 auto;
-      min-height: 100vh;
       padding: 16px;
     }
 
     h1 {
+      font-size: 1.4rem;
       text-align: center;
-      font-size: 20px;
-      margin-bottom: 16px;
-      color: var(--primary);
+      color: var(--red);
+      margin: 0 0 12px;
     }
 
     .card {
-      background: var(--card);
-      border-radius: var(--border-radius);
-      padding: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-      margin-bottom: 16px;
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid var(--grey-border);
+      padding: 12px 12px 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
     }
 
-    label {
-      display: block;
-      font-size: 14px;
-      margin-top: 10px;
-      margin-bottom: 4px;
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
     }
 
-    input, select {
+    .field-group label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .field-group .hint {
+      font-size: 0.7rem;
+      color: #9e9e9e;
+    }
+
+    input[type="number"],
+    select {
       width: 100%;
-      padding: 10px;
+      padding: 8px 10px;
       border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 14px;
+      border: 1px solid var(--grey-border);
+      font-size: 0.9rem;
+      outline: none;
+      background: var(--grey-bg);
     }
 
-    button {
+    input[type="number"]:focus,
+    select:focus {
+      border-color: var(--red-light);
+      background: #fff;
+    }
+
+    .btn {
       width: 100%;
-      margin-top: 16px;
-      padding: 12px;
+      padding: 10px 12px;
       border-radius: 999px;
       border: none;
-      background: var(--primary);
-      color: white;
-      font-size: 16px;
+      font-size: 0.95rem;
       font-weight: 600;
+      color: #fff;
+      background: var(--red);
       cursor: pointer;
-    }
-
-    button:disabled {
-      opacity: 0.6;
-      cursor: default;
-    }
-
-    .btn-reset {
-      background: #666;
-      margin-top: 8px;
-    }
-
-    .status {
-      margin-top: 8px;
-      font-size: 13px;
-      color: var(--text-muted);
-    }
-
-    .status.error {
-      color: #b71c1c;
-    }
-
-    .muted {
-      color: var(--text-muted);
-      font-size: 12px;
       margin-top: 4px;
     }
 
-    /* -------- TABLEAU (mode normal / desktop) -------- */
+    .btn:hover { background: var(--red-light); }
+
+    .btn-secondary {
+      margin-top: 8px;
+      background: #ffffff;
+      color: var(--red);
+      border: 1px solid var(--red);
+    }
+
+    .btn-secondary:hover { background: #ffeceb; }
+
+    .error {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: #b00020;
+    }
+
+    .section-title {
+      margin: 16px 0 6px;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .intro-text {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .table-wrapper {
+      margin-top: 4px;
+      border-radius: 10px;
+      border: 1px solid var(--grey-border);
+      overflow: hidden;
+      background: #fff;
+    }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 13px;
-      margin-top: 8px;
+      font-size: 0.75rem;
     }
+
+    thead { background: #ffebee; }
 
     th, td {
-      padding: 6px 8px;
-      border-bottom: 1px solid #eee;
+      padding: 6px 4px;
       text-align: left;
-      vertical-align: middle;
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: top;
     }
 
-    th {
-      background: #f0f0f0;
-      font-weight: 600;
-      font-size: 12px;
+    th:nth-child(3),
+    th:nth-child(4),
+    th:nth-child(5),
+    td:nth-child(3),
+    td:nth-child(4),
+    td:nth-child(5) {
+      text-align: right;
+      white-space: nowrap;
     }
+
+    tbody tr:nth-child(even) { background: #fafafa; }
 
     .ref {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: 12px;
-    }
-
-    .thumb {
-      width: 40px;
-      height: 40px;
-      object-fit: contain;
-      display: block;
-      margin: 0 auto;
-    }
-
-    tfoot td {
       font-weight: 600;
-      border-top: 2px solid #ccc;
+      white-space: nowrap;
     }
 
-    /* -------- TABLEAU RESPONSIVE (petits écrans) -------- */
+    .designation { font-size: 0.74rem; }
 
-    @media (max-width: 480px) {
+    .weights {
+      margin-top: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--grey-border);
+      padding: 8px 10px;
+      background: #fff;
+      font-size: 0.8rem;
+    }
 
-      table, thead, tbody, th, td, tr {
-        display: block;
-        width: 100%;
-      }
+    .weights-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 3px 0;
+    }
 
-      thead {
-        display: none;
-      }
+    .weights-row.total {
+      border-top: 1px solid var(--grey-border);
+      margin-top: 4px;
+      padding-top: 6px;
+    }
 
-      tr {
-        margin-bottom: 8px;
-        border-radius: 8px;
-        border: 1px solid #eee;
-        padding: 4px 6px;
-        background: #fafafa;
-      }
+    .warning {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: #fff8e1;
+      color: #795548;
+      font-size: 0.75rem;
+      border: 1px solid #ffe082;
+    }
 
-      td {
-        border: none;
-        border-bottom: 1px solid #eee;
-        position: relative;
-        padding: 4px 6px 4px 100px; /* un peu plus large pour les labels */
-        font-size: 12px;
-      }
+    .hidden { display: none; }
 
-      td:last-child {
-        border-bottom: none;
-      }
-
-      td::before {
-        content: attr(data-label);
-        position: absolute;
-        left: 6px;
-        top: 4px;
-        width: 90px;
-        font-weight: 600;
-        font-size: 11px;
-        color: var(--text-muted);
-      }
-
-      .ref {
-        font-size: 12px;
-      }
-
-      .thumb {
-        margin-left: 0;
-      }
-
-      tfoot {
-        display: block;
-        margin-top: 12px;
-      }
-
-      tfoot tr {
-        border: none;
-        background: transparent;
-        padding: 0;
-      }
-
-      tfoot td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border: none;
-        border-top: 1px solid #ddd;
-        padding: 4px 0;
-        font-size: 12px;
-      }
+    @media (max-width: 400px) {
+      .app { padding: 8px; }
+      .card { padding: 10px; }
     }
   </style>
 </head>
 <body>
-<div class="app">
-  <h1>Configurateur échafaudage</h1>
+  <div class="app">
+    <h1>Configurateur échafaudage</h1>
 
-  <div class="card">
-    <label>Longueur de façade L (m)</label>
-    <input id="L" type="number" min="1" step="0.1" placeholder="ex : 5">
+    <div class="card">
+      <form id="config-form">
+        <div class="field-group">
+          <label for="L">Longueur de façade L (m)</label>
+          <input id="L" type="number" step="0.1" min="0" required value="5" />
+        </div>
 
-    <label>Hauteur H (m)</label>
-    <input id="H" type="number" min="2" step="0.1" placeholder="ex : 6">
+        <div class="field-group">
+          <label for="H">Hauteur H (m)</label>
+          <input id="H" type="number" step="0.1" min="0" required value="6" />
+        </div>
 
-    <label>Largeur de l’échafaudage</label>
-    <select id="largeur">
-      <option value="1.00" selected>1,00 m</option>
-      <option value="0.70">0,70 m</option>
-    </select>
+        <div class="field-group">
+          <label for="largeur">Largeur de l’échafaudage</label>
+          <select id="largeur">
+            <option value="1.0" selected>1,00 m</option>
+            <option value="0.7">0,70 m</option>
+          </select>
+          <div class="hint">
+            Largeur 1,00 m par défaut. 0,70 m uniquement si tu connais la configuration.
+          </div>
+        </div>
 
-    <label>Protection côté mur ?</label>
-    <select id="protection">
-      <option value="OUI">OUI</option>
-      <option value="NON">NON</option>
-    </select>
-    <div class="muted">
-      ⚠ Obligatoire si l’espace entre l’échafaudage et le mur est supérieur à 20 cm.
+        <div class="field-group">
+          <label for="protection_mur">Protection côté mur ?</label>
+          <select id="protection_mur">
+            <option value="NON" selected>NON</option>
+            <option value="OUI">OUI</option>
+          </select>
+          <div class="hint">
+            ⚠ Obligatoire si l’espace entre l’échafaudage et le mur est &gt; 20 cm.
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="grutage">Grutage prévu ?</label>
+          <select id="grutage">
+            <option value="NON" selected>NON</option>
+            <option value="OUI">OUI</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label for="stabilisation">Stabilisation</label>
+          <select id="stabilisation">
+            <option value="stabilisateurs" selected>Stabilisateurs télescopiques</option>
+            <option value="amarrage">Amarrage au mur</option>
+            <option value="aucune">Aucune (à éviter)</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn">Lancer le calcul</button>
+        <button type="button" id="reset-btn" class="btn btn-secondary">Réinitialiser</button>
+
+        <div id="error" class="error hidden"></div>
+      </form>
+
+      <div id="result-section" class="hidden">
+        <p class="section-title">Liste de matériel</p>
+        <p class="intro-text">
+          Voici ta liste de matériel prête à être commandée. Tu peux aller sur le back-office ou ta tablette
+          pour renseigner les références et les quantités.
+        </p>
+
+        <div class="table-wrapper">
+          <table id="result-table">
+            <thead>
+              <tr>
+                <th>Réf.</th>
+                <th>Désignation</th>
+                <th>Qté</th>
+                <th>PU (kg)</th>
+                <th>PT (kg)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="weights" id="weights-block">
+          <div class="weights-row">
+            <span>Poids total échafaudage</span>
+            <span><strong id="poids-echaf">0</strong> kg</span>
+          </div>
+          <div class="weights-row">
+            <span>+ Estimation racks / paniers</span>
+            <span><strong id="poids-racks">0</strong> kg</span>
+          </div>
+          <div class="weights-row total">
+            <span>= Poids total global</span>
+            <span><strong id="poids-global">0</strong> kg</span>
+          </div>
+        </div>
+
+        <div id="navette-message" class="warning hidden"></div>
+      </div>
     </div>
-
-    <label>Grutage prévu ?</label>
-    <select id="grutage">
-      <option value="OUI">OUI</option>
-      <option value="NON">NON</option>
-    </select>
-
-    <label>Stabilisation</label>
-    <select id="stabilisation">
-      <option value="stabilisateurs">Stabilisateurs télescopiques</option>
-      <option value="amarrage">Amarrage au mur</option>
-    </select>
-
-    <button id="btn-calcul">Lancer le calcul</button>
-    <button id="btn-reset" class="btn-reset">Réinitialiser</button>
-    <div id="status" class="status"></div>
   </div>
 
-  <div class="card" id="bloc-resultat" style="display:none;">
-    <div style="font-weight:600; margin-bottom:4px;">
-      Voici ta liste de matériel prête à être commandée.
-    </div>
-    <div class="muted" style="margin-bottom:4px;">
-      Tu peux aller sur le back office ou ta tablette pour renseigner les références et les quantités.
-    </div>
-    <div id="recap" class="muted"></div>
+  <script>
+    const form = document.getElementById('config-form');
+    const resetBtn = document.getElementById('reset-btn');
+    const errorDiv = document.getElementById('error');
+    const resultSection = document.getElementById('result-section');
+    const tbody = document.querySelector('#result-table tbody');
+    const poidsEchafSpan = document.getElementById('poids-echaf');
+    const poidsRacksSpan = document.getElementById('poids-racks');
+    const poidsGlobalSpan = document.getElementById('poids-global');
+    const navetteMsg = document.getElementById('navette-message');
 
-    <div>
-      <table>
-        <thead>
-          <tr>
-            <th>Photo</th>
-            <th>Référence</th>
-            <th>Désignation</th>
-            <th>Qté</th>
-            <th>Poids unitaire (kg)</th>
-            <th>Poids total (kg)</th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-        <tfoot>
-          <tr>
-            <td colspan="5">Poids total échafaudage</td>
-            <td id="poids-global"></td>
-          </tr>
-          <tr>
-            <td colspan="5">+ Estimation racks / paniers</td>
-            <td id="poids-racks"></td>
-          </tr>
-          <tr>
-            <td colspan="5">= Poids total global</td>
-            <td id="poids-global-avec-racks"></td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-
-    <div id="transport-note" class="muted" style="margin-top:8px;"></div>
-  </div>
-</div>
-
-<script>
-// -------- Références officielles ALTRAD (désignation + poids) --------
-const REFERENCES = {
-  "ALTASV5": { designation: "Socle à vérin 0,61 m", poids: 3.2 },
-  "ALTAR12": { designation: "Roue orientable 250 kg avec vérin", poids: 9.5 },
-  "ALTKEMB": { designation: "Embase de départ", poids: 2.1 },
-  "ALTKPT2": { designation: "Poteau standard hauteur 1,00 m", poids: 5.4 },
-  "ALTKPT4": { designation: "Poteau standard hauteur 2,00 m", poids: 9.9 },
-  "ALTKLC1": { designation: "Lisse 0,70 m", poids: 3.1 },
-  "ALTKLC2": { designation: "Lisse 1,00 m", poids: 3.5 },
-  "ALTKLC5": { designation: "Lisse 2,50 m", poids: 8.5 },
-  "ALTKMC5": { designation: "Plancher acier 2,50 × 0,30 m", poids: 7.9 },
-  "ALTKMC2": { designation: "Plancher acier 1,00 × 0,30 m", poids: 7.5 },
-  "ALTKPE5": { designation: "Plancher trappe 2,50 × 0,60 m", poids: 25.4 },
-  "ALTKDV5": { designation: "Diagonale verticale 2,50 × 2,00 m", poids: 13.0 },
-  "ALTKGH5": { designation: "Garde-corps permanent de sécurité 2,50 m", poids: 13.2 },
-  "ALTKGH2": { designation: "Garde-corps permanent de sécurité 1,00 m (avec plinthe intégrée)", poids: 8.5 },
-  "ALTKGH1": { designation: "Garde-corps permanent de sécurité 0,70 m (avec plinthe intégrée)", poids: 7.2 },
-  "ALTKPI5": { designation: "Plinthe bois 2,50 m", poids: 4.9 },
-  "ALT000675": { designation: "Stabilisateur télescopique 3,30–6,00 m", poids: 21.3 },
-  "ALTAMX1": { designation: "Cale bois", poids: 3.7 },
-  "ALTACPI": { designation: "Cale plastique", poids: 0.3 },
-  "ALTAA11": { designation: "Tube d'amarrage 1,10 m crochet coudé", poids: 3.9 },
-  "ALTAPA2": { designation: "Piton d'ammarage diamètre 12 longueur 120mm", poids: 0.2 },
-  "ALTL99P": { designation: "Raccord angle droit pour tube 48,3mm (collier assemblage)", poids: 1.1 },
-  "ALTRLEV": { designation: "Collier de levage", poids: 1.1 },
-  "ALTKB12": { designation: "Boulon de jonction 12 × 60 mm", poids: 0.1 },
-  "ALTKB13": { designation: "Boulon de jonction 12 × 70 mm", poids: 0.1 },
-  "ALTKFSV": { designation: "Fixe socle à vérin", poids: 3.1 }
-};
-
-const btn = document.getElementById("btn-calcul");
-const btnReset = document.getElementById("btn-reset");
-const statusEl = document.getElementById("status");
-const blocResultat = document.getElementById("bloc-resultat");
-const tbody = document.getElementById("tbody");
-const recapEl = document.getElementById("recap");
-const poidsGlobalEl = document.getElementById("poids-global");
-const poidsRacksEl = document.getElementById("poids-racks");
-const poidsGlobalAvecRacksEl = document.getElementById("poids-global-avec-racks");
-const transportNoteEl = document.getElementById("transport-note");
-
-btn.addEventListener("click", () => {
-  const L = parseFloat(document.getElementById("L").value);
-  const H = parseFloat(document.getElementById("H").value);
-  const largeur = parseFloat(document.getElementById("largeur").value);
-  const protection_mur = document.getElementById("protection").value;
-  const grutage = document.getElementById("grutage").value;
-  const stabilisation = document.getElementById("stabilisation").value;
-
-  if (!L || !H) {
-    statusEl.textContent = "Merci de remplir au moins la longueur et la hauteur.";
-    statusEl.className = "status error";
-    return;
-  }
-
-  statusEl.textContent = "Calcul en cours…";
-  statusEl.className = "status";
-  blocResultat.style.display = "none";
-
-  const F = 1; // on considère toujours 1 façade
-  const data = calculLocal(L, H, largeur, F, protection_mur, grutage, stabilisation);
-  afficherResultats(data, { L, H, largeur, F, protection_mur, grutage, stabilisation });
-
-  statusEl.textContent = "Calepinage terminé ✅";
-  statusEl.className = "status";
-});
-
-// -------- Reset du formulaire --------
-btnReset.addEventListener("click", () => {
-  document.getElementById("L").value = "";
-  document.getElementById("H").value = "";
-  document.getElementById("largeur").value = "1.00";
-  document.getElementById("protection").value = "NON";
-  document.getElementById("grutage").value = "NON";
-  document.getElementById("stabilisation").value = "stabilisateurs";
-
-  blocResultat.style.display = "none";
-
-  statusEl.textContent = "";
-  statusEl.className = "status";
-  transportNoteEl.textContent = "";
-  recapEl.textContent = "";
-
-  tbody.innerHTML = "";
-  poidsGlobalEl.textContent = "";
-  poidsRacksEl.textContent = "";
-  poidsGlobalAvecRacksEl.textContent = "";
-});
-
-// -------- Calcul local --------
-function calculLocal(L, H, largeur, F, protection_mur_str, grutage_str, stabilisation) {
-  const protection_mur = protection_mur_str.toUpperCase() === "OUI";
-  const grutage = grutage_str.toUpperCase() === "OUI";
-
-  const T = Math.ceil(L / 2.5);  // travées
-  const N = Math.ceil(H / 2.0);  // niveaux
-
-  // 1) SOCLES / POTEAUX
-  const ALTASV5 = 2 * T + 2;
-  const ALTKEMB = ALTASV5;
-  const ALTKPT2 = ALTASV5;
-  const ALTKPT4 = ALTASV5 * N;
-
-  // 2) LISSES
-  const ALTKLC1 = Math.abs(largeur - 0.70) < 1e-6 ? 2 * T * N : 0;
-  const ALTKLC2 = Math.abs(largeur - 1.00) < 1e-6 ? 2 * T * N : 0;
-  const ALTKLC5 = protection_mur ? (2 * T + 2 * N) : (2 * T + N);
-
-  // 3) PLANCHERS
-  const base_planchers = 2 * T * N;
-  const corr_largeur = Math.abs(largeur - 1.00) < 1e-6 ? N : 0;
-  const corr_mur = protection_mur ? 2 : 0;
-  const ALTKMC5 = base_planchers + corr_largeur - corr_mur;
-
-  const nb_trappes = Math.max(1, Math.ceil(L / 20));
-  const ALTKPE5 = F * N * nb_trappes;
-
-  // 4) DIAGONALES
-  const ALTKDV5 = protection_mur ? (2 * F) : (1 * F);
-
-  // 5) GARDE-CORPS
-  const ALTKGH5 = protection_mur ? (2 * T * N) : (T * N);
-  const ALTKGH1 = Math.abs(largeur - 0.70) < 1e-6 ? 2 * N : 0;
-  const ALTKGH2 = Math.abs(largeur - 1.00) < 1e-6 ? 2 * N : 0;
-
-  // 6) PLINTHES
-  const ALTKPI5 = 2 * T * N;
-
-  // 7) STABILISATEURS
-  const ALT000675 =
-    (stabilisation === "stabilisateurs" && H <= 6) ? (T + 1) : 0;
-
-  // 8) AMARRAGE
-  const POINTS = (stabilisation === "amarrage")
-    ? Math.ceil((L * H) / 12)
-    : 0;
-  const ALTAA11 = POINTS;
-  const ALTAPA2 = POINTS;
-  const ALTL99P = POINTS;
-
-  // 9) GRUTAGE
-  const ALTRLEV = grutage ? 4 : 0;
-  const ALTKB12 = grutage ? ALTKPT4 : 0;
-  const ALTKB13 = grutage ? ALTKEMB : 0;
-  const ALTKFSV = grutage ? ALTASV5 : 0;
-
-  const quantites = {
-    ALTASV5,
-    ALTKEMB,
-    ALTKPT2,
-    ALTKPT4,
-    ALTKLC1,
-    ALTKLC2,
-    ALTKLC5,
-    ALTKMC5,
-    ALTKPE5,
-    ALTKDV5,
-    ALTKGH5,
-    ALTKGH1,
-    ALTKGH2,
-    ALTKPI5,
-    ALT000675,
-    ALTAA11,
-    ALTAPA2,
-    ALTL99P,
-    ALTRLEV,
-    ALTKB12,
-    ALTKB13,
-    ALTKFSV
-  };
-
-  const items = [];
-  let poids_total_global = 0;
-
-  for (const [ref, quantite] of Object.entries(quantites)) {
-    if (quantite <= 0) continue;
-
-    const meta = REFERENCES[ref] || {};
-    const designation = meta.designation || "";
-    const poids_unitaire = meta.poids ?? null;
-    let poids_total = null;
-
-    if (poids_unitaire != null) {
-      poids_total = +(poids_unitaire * quantite).toFixed(1);
-      poids_total_global += poids_total;
+    function formatKg(value) {
+      return value.toFixed(1).replace('.', ',');
     }
 
-    items.push({
-      reference: ref,
-      designation,
-      quantite,
-      poids_unitaire,
-      poids_total
+    function clearResults() {
+      tbody.innerHTML = '';
+      poidsEchafSpan.textContent = '0';
+      poidsRacksSpan.textContent = '0';
+      poidsGlobalSpan.textContent = '0';
+      navetteMsg.classList.add('hidden');
+      navetteMsg.textContent = '';
+      resultSection.classList.add('hidden');
+      errorDiv.classList.add('hidden');
+      errorDiv.textContent = '';
+    }
+
+    resetBtn.addEventListener('click', () => {
+      document.getElementById('L').value = '';
+      document.getElementById('H').value = '';
+      document.getElementById('largeur').value = '1.0';
+      document.getElementById('protection_mur').value = 'NON';
+      document.getElementById('grutage').value = 'NON';
+      document.getElementById('stabilisation').value = 'stabilisateurs';
+      clearResults();
     });
-  }
 
-  poids_total_global = +poids_total_global.toFixed(1);
-  return { items, poids_total_global };
-}
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorDiv.classList.add('hidden');
+      errorDiv.textContent = '';
 
-// -------- Affichage (tableau + poids + transport) --------
-function afficherResultats(data, params) {
-  const items = data.items || [];
-  const poidsGlobal = data.poids_total_global ?? null;
+      const L = parseFloat(document.getElementById('L').value);
+      const H = parseFloat(document.getElementById('H').value);
+      const largeur = parseFloat(document.getElementById('largeur').value);
+      const protection_mur = document.getElementById('protection_mur').value;
+      const grutage = document.getElementById('grutage').value;
+      const stabilisation = document.getElementById('stabilisation').value;
 
-  tbody.innerHTML = "";
+      if (!L || !H || L <= 0 || H <= 0) {
+        errorDiv.textContent = 'Merci de saisir une longueur et une hauteur valides.';
+        errorDiv.classList.remove('hidden');
+        return;
+      }
 
-  if (items.length === 0) {
-    tbody.innerHTML = "<tr><td colspan='6'>Aucun article calculé.</td></tr>";
-  } else {
-    for (const item of items) {
-      const imgSrc = `images/${item.reference}.jpg`;
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td data-label="Photo">
-          <img class="thumb" src="${imgSrc}" alt="${item.reference}" onerror="this.style.display='none';">
-        </td>
-        <td class="ref" data-label="Référence">${item.reference}</td>
-        <td data-label="Désignation">${item.designation || ""}</td>
-        <td data-label="Qté">${item.quantite}</td>
-        <td data-label="Poids unitaire (kg)">${item.poids_unitaire != null ? item.poids_unitaire.toFixed(1) : "-"}</td>
-        <td data-label="Poids total (kg)">${item.poids_total != null ? item.poids_total.toFixed(1) : "-"}</td>
-      `;
-      tbody.appendChild(tr);
-    }
-  }
+      try {
+        const response = await fetch('/api/calcul', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            L,
+            H,
+            largeur,
+            protection_mur,
+            grutage,
+            stabilisation,
+          }),
+        });
 
-  // Poids échafaudage seul
-  if (poidsGlobal != null) {
-    poidsGlobalEl.textContent = poidsGlobal.toFixed(1) + " kg";
-  } else {
-    poidsGlobalEl.textContent = "-";
-  }
+        if (!response.ok) {
+          throw new Error('Erreur HTTP ' + response.status);
+        }
 
-  // Estimation racks / paniers (en nombre de références distinctes)
-  const nbRefs = items.length;
-  let poidsRacks = 0;
+        const data = await response.json();
 
-  if (nbRefs > 0 && nbRefs < 10) {
-    poidsRacks = 43;
-  } else if (nbRefs < 25) {
-    poidsRacks = 173;
-  } else if (nbRefs >= 25) {
-    const blocs = Math.ceil(nbRefs / 25);
-    poidsRacks = 173 * blocs;
-  }
+        tbody.innerHTML = '';
+        for (const item of data.items) {
+          const tr = document.createElement('tr');
 
-  poidsRacksEl.textContent = poidsRacks > 0 ? poidsRacks.toFixed(1) + " kg" : "-";
+          const tdRef = document.createElement('td');
+          tdRef.textContent = item.reference;
+          tdRef.className = 'ref';
+          tr.appendChild(tdRef);
 
-  let poidsGlobalAvecRacks = null;
-  if (poidsGlobal != null) {
-    poidsGlobalAvecRacks = +(poidsGlobal + poidsRacks).toFixed(1);
-    poidsGlobalAvecRacksEl.textContent = poidsGlobalAvecRacks.toFixed(1) + " kg";
-  } else {
-    poidsGlobalAvecRacksEl.textContent = "-";
-  }
+          const tdDes = document.createElement('td');
+          tdDes.textContent = item.designation || '';
+          tdDes.className = 'designation';
+          tr.appendChild(tdDes);
 
-  // Logistique navette / camion (seuil 350 kg)
-  if (poidsGlobalAvecRacks != null) {
-    if (poidsGlobalAvecRacks <= 350) {
-      transportNoteEl.textContent =
-        "Le poids total (avec estimation des racks/paniers) reste inférieur ou égal à 350 kg : " +
-        "la navette reste possible, sous réserve des capacités de ton fourgon.";
-    } else {
-      transportNoteEl.textContent =
-        "⚠️ Poids total estimé supérieur à 350 kg (avec racks/paniers). " +
-        "Si tu prévoyais d'utiliser la navette, ce ne sera pas possible : " +
-        "il faudra prévoir une livraison camion, à anticiper au minimum 3 jours ouvrés avant la date souhaitée.";
-    }
-  } else {
-    transportNoteEl.textContent = "";
-  }
+          const tdQte = document.createElement('td');
+          tdQte.textContent = item.quantite;
+          tr.appendChild(tdQte);
 
-  recapEl.textContent =
-    `Configuration : ${params.L} m × ${params.H} m, largeur ${params.largeur} m, ` +
-    `protection mur ${params.protection_mur}, grutage ${params.grutage}, ` +
-    `stabilisation ${params.stabilisation}.`;
+          const tdPU = document.createElement('td');
+          tdPU.textContent = formatKg(item.poids_unitaire || 0);
+          tr.appendChild(tdPU);
 
-  blocResultat.style.display = "block";
-}
-</script>
+          const tdPT = document.createElement('td');
+          tdPT.textContent = formatKg(item.poids_total || 0);
+          tr.appendChild(tdPT);
+
+          tbody.appendChild(tr);
+        }
+
+        poidsEchafSpan.textContent = formatKg(data.poids_echafaudage || 0);
+        poidsRacksSpan.textContent = formatKg(data.poids_racks || 0);
+        poidsGlobalSpan.textContent = formatKg(data.poids_total_global || 0);
+
+        if (!data.navette_autorisee) {
+          navetteMsg.innerHTML =
+            '⚠️ Poids total estimé supérieur à 350 kg (avec racks/paniers).<br>' +
+            'Si tu prévoyais de faire descendre ce matériel par la navette, ce ne sera pas possible : ' +
+            'la commande dépasse ses capacités.<br>' +
+            'Si tu n’as pas prévu de venir chercher toi-même en fourgon le matériel à Fresse dans les limites de capacité de ton fourgon, ' +
+            'il faut prévoir une livraison camion, à anticiper au minimum 3 jours ouvrés avant la date de livraison souhaitée.';
+          navetteMsg.classList.remove('hidden');
+        } else {
+          navetteMsg.classList.add('hidden');
+          navetteMsg.textContent = '';
+        }
+
+        resultSection.classList.remove('hidden');
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = "Erreur lors de l’appel : " + err.message;
+        errorDiv.classList.remove('hidden');
+        resultSection.classList.add('hidden');
+      }
+    });
+  </script>
 </body>
 </html>
