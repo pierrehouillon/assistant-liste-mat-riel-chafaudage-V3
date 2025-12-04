@@ -73,6 +73,11 @@
       background: var(--grey-bg);
     }
 
+    input[type="number"]::placeholder {
+      color: #bdbdbd;
+      font-size: 0.85rem;
+    }
+
     input[type="number"]:focus,
     select:focus {
       border-color: var(--red-light);
@@ -210,12 +215,26 @@
       <form id="config-form">
         <div class="field-group">
           <label for="L">Longueur de façade L (m)</label>
-          <input id="L" type="number" step="0.1" min="0" required value="5" />
+          <input
+            id="L"
+            type="number"
+            step="0.1"
+            min="0"
+            required
+            placeholder="Ex : 10"
+          />
         </div>
 
         <div class="field-group">
-          <label for="H">Hauteur H (m)</label>
-          <input id="H" type="number" step="0.1" min="0" required value="6" />
+          <label for="H">Hauteur du dernier niveau (m)</label>
+          <input
+            id="H"
+            type="number"
+            step="0.1"
+            min="0"
+            required
+            placeholder="Ex : 6"
+          />
         </div>
 
         <div class="field-group">
@@ -253,7 +272,6 @@
           <select id="stabilisation">
             <option value="stabilisateurs" selected>Stabilisateurs télescopiques</option>
             <option value="amarrage">Amarrage au mur</option>
-            <option value="aucune">Aucune (à éviter)</option>
           </select>
         </div>
 
