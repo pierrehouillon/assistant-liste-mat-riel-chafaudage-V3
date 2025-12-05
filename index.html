@@ -32,7 +32,7 @@
     h1 {
       font-size: 1.4rem;
       text-align: center;
-      color: --red;
+      color: var(--red);
       margin: 0 0 12px;
     }
 
@@ -92,18 +92,18 @@
       font-size: 0.95rem;
       font-weight: 600;
       color: #fff;
-      background: #c62828;
+      background: var(--red);
       cursor: pointer;
       margin-top: 4px;
     }
 
-    .btn:hover { background: #ef5350; }
+    .btn:hover { background: var(--red-light); }
 
     .btn-secondary {
       margin-top: 8px;
       background: #ffffff;
-      color: #c62828;
-      border: 1px solid #c62828;
+      color: var(--red);
+      border: 1px solid var(--red);
     }
 
     .btn-secondary:hover { background: #ffeceb; }
@@ -249,13 +249,14 @@
         </div>
 
         <div class="field-group">
-          <label for="protection_mur">Protection côté mur ?</label>
+          <label for="protection_mur">Garde-corps de chute avant ?</label>
           <select id="protection_mur">
             <option value="NON" selected>NON</option>
             <option value="OUI">OUI</option>
           </select>
           <div class="hint">
-            ⚠ Obligatoire si l’espace entre l’échafaudage et le mur est &gt; 20 cm.
+            ⚠ Garde-corps de chute avant obligatoire si le risque de chute vers l’avant existe
+            (par exemple si l’espace entre l’échafaudage et la zone de travail est important).
           </div>
         </div>
 
