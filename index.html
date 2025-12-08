@@ -4,6 +4,18 @@
   <meta charset="UTF-8" />
   <title>Configurateur échafaudage ALTRAD METRIX</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Google Analytics 4 -->
+  <!-- Remplace G-XXXXXXXXXX par ton ID de mesure GA4 -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-MPJQDQ332F"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    // Config GA4 pour ta propriété
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
+
   <style>
     :root {
       --red: #c62828;
@@ -410,6 +422,18 @@
         }
 
         const data = await response.json();
+
+        // Tracking Google Analytics : utilisation du calculateur
+        try {
+          if (window.gtag) {
+            gtag('event', 'calculateur_echafaudage_utilise', {
+              event_category: 'echafaudage',
+              event_label: 'clic_lancer_calcul',
+            });
+          }
+        } catch (e) {
+          console.warn('Erreur tracking GA', e);
+        }
 
         tbody.innerHTML = '';
         for (const item of data.items) {
