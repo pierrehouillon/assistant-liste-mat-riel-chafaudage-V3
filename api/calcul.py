@@ -7,62 +7,56 @@ import os
 
 app = FastAPI()
 
-# CORS : autoriser l'appli web (Glide / Vercel) à appeler l'API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # tu pourras restreindre à ton domaine Glide si besoin
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Chargement des références (désignation + poids unitaire)
 DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "references.json")
 with open(DATA_PATH, "r", encoding="utf-8") as f:
     REF_DATA = json.load(f)
 
 
 class EchafaudageRequest(BaseModel):
-    L: float              # longueur façade (m)
-    H: float              # hauteur du dernier niveau (m)
-    largeur: float        # 0.7 ou 1.0
-    protection_mur: str   # "OUI" / "NON"
-    grutage: str          # "OUI" / "NON"
-    stabilisation: str    # "stabilisateurs" / "amarrage"
-    calage_type: str      # "bois" / "plastique" / "les_deux"
+    L: float
+    H: float
+    largeur: float
+    protection_mur: str
+    grutage: str
+    stabilisation: str
+    calage_type: str
 
 
 @app.post("/api/calcul")
 def calcul_echafaudage(req: EchafaudageRequest):
-    """
-    Calcule les quantités d'éléments ALTRAD METRIX, ainsi que :
-    - le poids total échafaudage
-    - le poids estimé des racks / paniers
-    - le poids total global
-    """
 
     L = req.L
     H = req.H
     largeur = req.largeur
     protection_mur = req.protection_mur.strip().upper() == "OUI"
     grutage = req.grutage.strip().upper() == "OUI"
-    stabilisation = req.stabilisation.strip().lower()  # "stabilisateurs" ou "amarrage"
-    calage_type = req.calage_type.strip().lower()      # "bois" / "plastique" / "les_deux"
+    stabilisation = req.stabilisation.strip().lower()
+    calage_type = req.calage_type.strip().lower()
 
-    # 1) Travées & niveaux
-    T = math.ceil(L / 2.5)   # travées
-    N = math.ceil(H / 2.0)   # niveaux
-    F = 1                    # on considère 1 façade
+    T = math.ceil(L / 2.5)
+    N = math.ceil(H / 2.0)
+    F = 1
 
-    # 2) SOCLES / EMBASES / POTEAUX
     ALTASV5 = 2 * T + 2
     ALTKEMB = ALTASV5
     ALTKPT2 = ALTASV5
     ALTKPT4 = ALTASV5 * N
 
-    # 3) LISSES
-    ALTKLC1 = 2 * T * N if abs(largeur - 0.70) < 1e-6 else 0
-    ALTKLC2 = 2 * T * N if abs(largeur - 1.00) < 1e-6 else 0
+    # 3) LISSES DE LARGEUR
+    # Correction : on ajoute les lisses d'extrémité.
+    # Exemple T=1 / N=1 => 2 lisses de façade + 2 lisses d'extrémité = 4
+    ALTKLC1 = (2 * T * N + 2 * N) if abs(largeur - 0.70) < 1e-6 else 0
+    ALTKLC2 = (2 * T * N + 2 * N) if abs(largeur - 1.00) < 1e-6 else 0
+
+    # Lisses longitudinales 2,50 m
     if protection_mur:
         ALTKLC5 = 2 * T + 2 * N
     else:
@@ -72,10 +66,22 @@ def calcul_echafaudage(req: EchafaudageRequest):
     base_planchers = 2 * T * N
     corr_largeur = N if abs(largeur - 1.00) < 1e-6 else 0
     corr_mur = 2 if protection_mur else 0
+
     ALTKMC5 = base_planchers + corr_largeur - corr_mur
 
+    # Correction largeur 1,00 m :
+    # À partir de 2,00 m de haut, on ajoute les planchers acier
+    # pour compléter à côté du plancher trappe.
+    if H >= 2.0 and abs(largeur - 1.00) < 1e-6:
+        ALTKMC5 += 2
+
     nb_trappes_par_facade = math.ceil(L / 20.0)
-    ALTKPE5 = F * N * nb_trappes_par_facade
+
+    # Pas de plancher trappe en dessous de 2,00 m
+    if H >= 2.0:
+        ALTKPE5 = F * N * nb_trappes_par_facade
+    else:
+        ALTKPE5 = 0
 
     # 5) DIAGONALES
     ALTKDV5 = 2 * F if protection_mur else 1 * F
@@ -91,8 +97,7 @@ def calcul_echafaudage(req: EchafaudageRequest):
     # 8) STABILISATEURS
     ALT000675 = (T + 1) if (stabilisation == "stabilisateurs" and H <= 6.0) else 0
 
-    # 9) CALAGE (en fonction du choix utilisateur)
-    # nombre de points de calage = 1 par socle + 1 par stabilisateur télescopique
+    # 9) CALAGE
     points_calage = ALTASV5 + ALT000675
 
     use_bois = calage_type in ("bois", "les_deux", "les deux")
@@ -106,6 +111,7 @@ def calcul_echafaudage(req: EchafaudageRequest):
         POINTS_AMARRAGE = math.ceil((L * H) / 12.0)
     else:
         POINTS_AMARRAGE = 0
+
     ALTAA11 = POINTS_AMARRAGE
     ALTAPA2 = POINTS_AMARRAGE
     ALTL99P = POINTS_AMARRAGE
@@ -116,7 +122,6 @@ def calcul_echafaudage(req: EchafaudageRequest):
     ALTKB13 = ALTKEMB if grutage else 0
     ALTKFSV = ALTASV5 if grutage else 0
 
-    # 12) Quantités
     quantites = {
         "ALTASV5": ALTASV5,
         "ALTKEMB": ALTKEMB,
@@ -144,7 +149,6 @@ def calcul_echafaudage(req: EchafaudageRequest):
         "ALTKFSV": ALTKFSV,
     }
 
-    # 13) Lignes + poids échafaudage + quantité totale de pièces
     items = []
     poids_echafaudage = 0.0
     quantite_totale = 0
@@ -152,27 +156,23 @@ def calcul_echafaudage(req: EchafaudageRequest):
     for ref, qte in quantites.items():
         if qte <= 0:
             continue
+
         data = REF_DATA.get(ref, {})
         designation = data.get("designation", "")
         poids_unitaire = float(data.get("poids", 0) or 0)
         poids_total = poids_unitaire * qte
+
         poids_echafaudage += poids_total
         quantite_totale += qte
 
-        items.append(
-            {
-                "reference": ref,
-                "designation": designation,
-                "quantite": qte,
-                "poids_unitaire": poids_unitaire,
-                "poids_total": poids_total,
-            }
-        )
+        items.append({
+            "reference": ref,
+            "designation": designation,
+            "quantite": qte,
+            "poids_unitaire": poids_unitaire,
+            "poids_total": poids_total,
+        })
 
-    # 14) Poids racks / paniers basé sur la QUANTITÉ TOTALE DE PIÈCES
-    #   - < 10 pièces : 1 châssis seul (~43 kg)
-    #   - 10 à 40 pièces : 1 châssis + 1 panier (~173 kg)
-    #   - > 40 pièces : 1 châssis + 1 panier + 1 panier supplémentaire par tranche de 40 pièces au-delà de 40
     if quantite_totale == 0:
         poids_racks = 0.0
     elif quantite_totale < 10:
