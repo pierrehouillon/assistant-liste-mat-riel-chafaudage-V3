@@ -41,28 +41,30 @@ def calcul_echafaudage(req: EchafaudageRequest):
     stabilisation = req.stabilisation.strip().lower()
     calage_type = req.calage_type.strip().lower()
 
+    # 1) Travées & niveaux
     T = math.ceil(L / 2.5)
     N = math.ceil(H / 2.0)
     F = 1
 
+    # 2) SOCLES / EMBASES / POTEAUX
     ALTASV5 = 2 * T + 2
     ALTKEMB = ALTASV5
     ALTKPT2 = ALTASV5
     ALTKPT4 = ALTASV5 * N
 
-    # 3) LISSES DE LARGEUR
-    # Correction : on ajoute les lisses d'extrémité.
+    # 3) LISSES DE LARGEUR 0,70 m / 1,00 m
     # Exemple T=1 / N=1 => 2 lisses de façade + 2 lisses d'extrémité = 4
     ALTKLC1 = (2 * T * N + 2 * N) if abs(largeur - 0.70) < 1e-6 else 0
     ALTKLC2 = (2 * T * N + 2 * N) if abs(largeur - 1.00) < 1e-6 else 0
 
-    # Lisses longitudinales 2,50 m
-    if protection_mur:
-        ALTKLC5 = 2 * T + 2 * N
-    else:
-        ALTKLC5 = 2 * T + N
+    # 4) LISSES 2,50 m
+    # Correction demandée :
+    # même calcul que le garde-corps de chute avant soit OUI ou NON.
+    # Exemple T=1 / H=2m / N=1 => 4
+    # Exemple T=1 / H=4m / N=2 => 6
+    ALTKLC5 = 2 * T + 2 * N
 
-    # 4) PLANCHERS
+    # 5) PLANCHERS
     base_planchers = 2 * T * N
     corr_largeur = N if abs(largeur - 1.00) < 1e-6 else 0
     corr_mur = 2 if protection_mur else 0
@@ -83,21 +85,21 @@ def calcul_echafaudage(req: EchafaudageRequest):
     else:
         ALTKPE5 = 0
 
-    # 5) DIAGONALES
+    # 6) DIAGONALES
     ALTKDV5 = 2 * F if protection_mur else 1 * F
 
-    # 6) GARDE-CORPS
+    # 7) GARDE-CORPS
     ALTKGH5 = 2 * T * N if protection_mur else T * N
     ALTKGH1 = 2 * N if abs(largeur - 0.70) < 1e-6 else 0
     ALTKGH2 = 2 * N if abs(largeur - 1.00) < 1e-6 else 0
 
-    # 7) PLINTHES
+    # 8) PLINTHES
     ALTKPI5 = 2 * T * N
 
-    # 8) STABILISATEURS
+    # 9) STABILISATEURS
     ALT000675 = (T + 1) if (stabilisation == "stabilisateurs" and H <= 6.0) else 0
 
-    # 9) CALAGE
+    # 10) CALAGE
     points_calage = ALTASV5 + ALT000675
 
     use_bois = calage_type in ("bois", "les_deux", "les deux")
@@ -106,7 +108,7 @@ def calcul_echafaudage(req: EchafaudageRequest):
     ALTAMX1 = points_calage if use_bois else 0
     ALTACPI = points_calage if use_plastique else 0
 
-    # 10) AMARRAGE
+    # 11) AMARRAGE
     if stabilisation == "amarrage":
         POINTS_AMARRAGE = math.ceil((L * H) / 12.0)
     else:
@@ -116,7 +118,7 @@ def calcul_echafaudage(req: EchafaudageRequest):
     ALTAPA2 = POINTS_AMARRAGE
     ALTL99P = POINTS_AMARRAGE
 
-    # 11) GRUTAGE
+    # 12) GRUTAGE
     ALTRLEV = 4 if grutage else 0
     ALTKB12 = ALTKPT4 if grutage else 0
     ALTKB13 = ALTKEMB if grutage else 0
